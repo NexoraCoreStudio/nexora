@@ -139,7 +139,7 @@ Make-Button 'Diagnostic complet' 'SDK, processus, dossiers et USB/IP' 'Doctor' 2
 
 Make-Button 'Demarrer (developpement)' 'Identite separee si chemin different' 'RunDev' 0 1
 Make-Button 'Executer les tests' 'dotnet test - Release' 'Tests' 1 1
-Make-Button 'Etat USB/IP' 'Ports et peripheriques FIDO' 'USBIP' 2 1
+Make-Button 'Etat USB/IP' 'Controleur VHCI, signature, ports' 'USBIP' 2 1
 
 Make-Button 'Arreter Nexora' 'Arret force avec confirmation' 'Stop' 0 2
 Make-Button 'Publier Nexora.exe' 'Application Windows x64' 'Publish' 1 2
@@ -150,6 +150,7 @@ Make-Button 'Creer l installateur' 'Inno Setup 6 requis' 'Installer' 1 3
 Make-Button 'Afficher les journaux' 'Evenements et erreurs' 'OpenLogs' 2 3
 
 Make-Button 'Ouvrir les donnees' 'Emplacements des identifiants' 'OpenData' 0 4
+Make-Button 'Installer pilote USB/IP' 'Choisir un INF signe ; UAC' 'InstallDriver' 2 4
 
 $lastAction = Make-Label 'Pret. Les commandes s executent dans des consoles separees.' 35 661 970 24 9 $false '#92A7CC'
 
@@ -159,7 +160,18 @@ function Refresh-Status {
     $statusApp.ForeColor = if($apps.Count -gt 0){ Color '#5CE3B4' } else { Color '#F2B679' }
 
     $exeUsb = Join-Path $env:ProgramFiles 'USBip\usbip.exe'
-    $statusUSB.Text = if(Test-Path -LiteralPath $exeUsb){ 'USB/IP : CLIENT INSTALLE' }else{ 'USB/IP : CLIENT ABSENT' }
+    $controller = @(Get-PnpDevice -ErrorAction SilentlyContinue |
+        Where-Object { $_.InstanceId -like 'ROOT\USB\*' -and $_.FriendlyName -match 'USBip|VHCI' -and $_.Status -eq 'OK' })
+    if ($controller.Count -gt 0 -and (Test-Path -LiteralPath $exeUsb)) {
+        $statusUSB.Text = 'USB/IP : PILOTE ET CLIENT OK'
+        $statusUSB.ForeColor = Color '#5CE3B4'
+    } elseif ($controller.Count -gt 0) {
+        $statusUSB.Text = 'USB/IP : PILOTE OK / CLIENT ABSENT'
+        $statusUSB.ForeColor = Color '#F2B679'
+    } else {
+        $statusUSB.Text = 'USB/IP : PILOTE NON DETECTE'
+        $statusUSB.ForeColor = Color '#F2B679'
+    }
     $statusSDK.Text = if(Get-Command dotnet -ErrorAction SilentlyContinue){ '.NET SDK : DISPONIBLE' }else{ '.NET SDK : ABSENT' }
 }
 

@@ -1,9 +1,9 @@
 # Nexora Manager - commandes locales (Windows PowerShell 5.1)
-# N'affecte pas les pilotes ni les identifiants CTAP2.
+# Le pilote ne change que via une action explicite, un INF signé et l'UAC.
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
-    [ValidateSet('Build','Tests','Publish','Installer','Doctor','USBIP','RunInstalled','RunDev','Stop','OpenLogs','OpenData','OpenProject','BackupData')]
+    [ValidateSet('Build','Tests','Publish','Installer','Doctor','USBIP','InstallDriver','RunInstalled','RunDev','Stop','OpenLogs','OpenData','OpenProject','BackupData')]
     [string]$Action,
     [string]$Repository = (Split-Path $PSScriptRoot -Parent),
     [switch]$ForceStop
@@ -180,18 +180,18 @@ try {
             Write-Host "Nexora arrete. Verifiez les ports USB/IP si une cle est encore affichee."
         }
         'USBIP' {
-            Title 'USB/IP - statut seulement (aucune modification)'
-            $usbip = Get-UsbipExe
-            if (Test-Path -LiteralPath $usbip) {
-                & $usbip port
-            } else {
-                Write-Host "usbip.exe absent : $usbip" -ForegroundColor Yellow
-            }
-            if (Get-Command Get-PnpDevice -ErrorAction SilentlyContinue) {
-                Get-PnpDevice -ErrorAction SilentlyContinue |
-                    Where-Object { $_.FriendlyName -match 'fido' -or $_.InstanceId -match 'VID_1953&PID_1337' } |
-                    Select-Object Status,Class,FriendlyName,InstanceId | Format-Table -AutoSize
-            }
+            Title 'Etat complet du pilote USB/IP et du client'
+            $driverTool = Join-Path (Split-Path $Repository -Parent) 'nexora-usb\tools\Nexora-UsbDriver.ps1'
+            if (-not (Test-Path -LiteralPath $driverTool)) { Fail "Outil de diagnostic absent : $driverTool" }
+            & $driverTool -Action Status
+            if (-not $?) { Fail 'Echec du diagnostic du pilote USB/IP.' }
+        }
+        'InstallDriver' {
+            Title 'Installation manuelle du pilote USB/IP signe'
+            $driverTool = Join-Path (Split-Path $Repository -Parent) 'nexora-usb\tools\Nexora-UsbDriver.ps1'
+            if (-not (Test-Path -LiteralPath $driverTool)) { Fail "Outil d'installation absent : $driverTool" }
+            & $driverTool -Action Install
+            if (-not $?) { Fail "L'installation du pilote n'a pas abouti." }
         }
         'Doctor' {
             Title 'Diagnostics non destructifs'
@@ -200,15 +200,13 @@ try {
             $sdk = Get-Command dotnet -ErrorAction SilentlyContinue
             Write-Host ('dotnet SDK : ' + $(if($sdk){'present'}else{'ABSENT'}))
             if($sdk){ & dotnet --version }
-            $usbip=Get-UsbipExe
-            Write-Host ('usbip.exe : ' + $(if(Test-Path -LiteralPath $usbip){'present'}else{'ABSENT'}))
-            Write-Host ('Installateur Inno Setup : ' +
-                $(if (Test-Path 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe') {'present'} elseif (Test-Path 'C:\Program Files\Inno Setup 6\ISCC.exe') {'present'} else {'ABSENT'}))
-            Write-Host "Instances Nexora : $(@(Get-RunningApps).Count)"
+            Write-Host ('Instances Nexora : ' + @(Get-RunningApps).Count)
             $locations = @(Get-DataLocations)
             Write-Host "Dossiers de donnees detectes : $($locations.Count)"
             foreach($loc in $locations) { Write-Host " - $($loc.Label): $($loc.Path)" }
-            Write-Host "Aucune modification du pilote USB/IP." -ForegroundColor Cyan
+            $driverTool = Join-Path (Split-Path $Repository -Parent) 'nexora-usb\tools\Nexora-UsbDriver.ps1'
+            if (Test-Path -LiteralPath $driverTool) { & $driverTool -Action Status }
+            else { Write-Host "Outil de diagnostic USB/IP absent : $driverTool" -ForegroundColor Yellow }
         }
         'OpenLogs' {
             Title 'Journaux de Nexora'
