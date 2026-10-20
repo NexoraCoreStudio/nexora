@@ -1,0 +1,84 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Nexora.Gui.Dialogs.AddStickWindow"
+        Title="Add stick"
+        Width="440" SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False">
+    <ScrollViewer MaxHeight="600">
+        <StackPanel Margin="16" Spacing="12">
+            <StackPanel Spacing="4">
+                <TextBlock Text="Name"/>
+                <TextBox x:Name="NameBox" MaxLength="32" Watermark="Letters, digits, '.', '_', '-' - no spaces"/>
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Serial number"/>
+                <TextBox x:Name="SerialNumberBox"/>
+            </StackPanel>
+
+            <StackPanel x:Name="SecretManagerSection" Spacing="4">
+                <TextBlock Text="Secret manager"/>
+                <ComboBox x:Name="SecretManagerTypeBox" HorizontalAlignment="Stretch" SelectionChanged="SecretManagerType_SelectionChanged">
+                    <ComboBoxItem Content="Memory (not persisted)"/>
+                    <ComboBoxItem Content="File-based"/>
+                    <ComboBoxItem Content="mTLS server"/>
+                </ComboBox>
+            </StackPanel>
+
+            <StackPanel x:Name="FilePanel" Spacing="12" IsVisible="False">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Username"/>
+                    <TextBox x:Name="FileUsernameBox"/>
+                </StackPanel>
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Password"/>
+                    <TextBox x:Name="FilePasswordBox" PasswordChar="*"/>
+                    <TextBlock Text="Used now to initialize the encrypted key store - not saved, so you'll enter it again each time you Connect." Foreground="Gray" FontSize="11" TextWrapping="Wrap"/>
+                </StackPanel>
+            </StackPanel>
+
+            <StackPanel x:Name="MtlsPanel" Spacing="12" IsVisible="False">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Server base address"/>
+                    <TextBox x:Name="MtlsServerAddressBox" Text="https://localhost:5443" Watermark="https://secrets.example.internal:5443"/>
+                </StackPanel>
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Login password"/>
+                    <TextBox x:Name="MtlsLoginPasswordBox" PasswordChar="*"/>
+                    <TextBlock Text="Used now to test the connection - not saved, so you'll enter it again each time you Connect." Foreground="Gray" FontSize="11" TextWrapping="Wrap"/>
+                </StackPanel>
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Client certificate (.pfx)"/>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBox x:Name="MtlsClientCertPathBox" Grid.Column="0"/>
+                        <Button Content="Browse..." Grid.Column="1" Margin="8,0,0,0" Click="BrowseClientCert_Click"/>
+                    </Grid>
+                </StackPanel>
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Client certificate password (optional)"/>
+                    <TextBox x:Name="MtlsClientCertPasswordBox" PasswordChar="*"/>
+                </StackPanel>
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Server CA certificate"/>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBox x:Name="MtlsServerCaCertPathBox" Grid.Column="0"/>
+                        <Button Content="Browse..." Grid.Column="1" Margin="8,0,0,0" Click="BrowseServerCaCert_Click"/>
+                    </Grid>
+                </StackPanel>
+            </StackPanel>
+
+            <TextBlock x:Name="ErrorText" Foreground="IndianRed" TextWrapping="Wrap" IsVisible="False"/>
+
+            <Grid ColumnDefinitions="*,Auto">
+                <Button x:Name="DeleteButton" Grid.Column="0" Content="Delete" HorizontalAlignment="Left"
+                        IsVisible="False" Click="Delete_Click"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+                    <Button Content="Cancel" Width="80" Click="Cancel_Click"/>
+                    <Button x:Name="CreateButton" Content="Create" Width="80" Click="Create_Click" IsDefault="True"/>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</Window>
