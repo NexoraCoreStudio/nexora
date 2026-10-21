@@ -21,10 +21,11 @@
             <StackPanel x:Name="SecretManagerSection" Spacing="4">
                 <TextBlock Text="Secret manager"/>
                 <ComboBox x:Name="SecretManagerTypeBox" HorizontalAlignment="Stretch" SelectionChanged="SecretManagerType_SelectionChanged">
-                    <ComboBoxItem Content="Memory (not persisted)"/>
-                    <ComboBoxItem Content="File-based"/>
-                    <ComboBoxItem Content="mTLS server"/>
+                    <ComboBoxItem Content="Memory (not persisted)" IsEnabled="False" ToolTip.Tip="Clés temporaires perdues à la fermeture de Nexora."/>
+                    <ComboBoxItem Content="Nexora Vault (encrypted)"/>
+                    <ComboBoxItem Content="mTLS server" IsEnabled="False" ToolTip.Tip="Les secrets seraient stockés sur un serveur externe, hors de Nexora.vault."/>
                 </ComboBox>
+                <TextBlock Text="Nexora 1.2 : seule la conservation chiffrée dans Nexora.vault est activée. Le mode Memory est temporaire ; mTLS stocke les secrets sur un serveur externe." TextWrapping="Wrap" Foreground="#9BAEC8" FontSize="12" />
             </StackPanel>
 
             <StackPanel x:Name="FilePanel" Spacing="12" IsVisible="False">

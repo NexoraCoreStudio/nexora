@@ -27,3 +27,8 @@ coverage/
 *.key
 .env
 .env.*
+
+# Nexora 1.2 portable encrypted vault: never publish user data
+*.vault
+*.nvault
+*.vault.new.*

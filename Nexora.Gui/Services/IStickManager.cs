@@ -35,6 +35,8 @@ public interface IStickManager
 
     Task<StickAttachResult> DisconnectAsync(string stickName);
 
+    Task DisconnectAllAsync();
+
     /// <summary>
     /// Metadata-only view of every credential stored on a currently connected stick. Never
     /// exposes key handles or private key material. Throws if the stick isn't connected.

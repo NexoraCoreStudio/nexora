@@ -1,58 +1,35 @@
-using System;
-using System.IO;
-using System.Linq;
-using System.Text.Json;
-using System.Collections.Generic;
+using Nexora.Gui.Security;
 
 namespace Nexora.Gui.Telemetry;
 
-// Audit metadata only. Never record PINs, CBOR payloads, credentials or key material.
+/// <summary>All application security events are recorded within encrypted Nexora.vault.</summary>
 public sealed class SecurityAudit
 {
     public static SecurityAudit Instance { get; } = new();
-    private readonly object _sync = new();
-    private readonly string _path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Nexora", "royal-audit.jsonl");
-
     private SecurityAudit() { }
 
     public void Record(string category, string outcome, string description = "")
     {
-        // Only fixed identifiers, never user-supplied account data in the log.
-        var allowed = new[] { "APP", "PIN", "USB", "FIDO" };
-        if (!allowed.Contains(category)) return;
-        var entry = new Entry(DateTimeOffset.UtcNow, category, outcome.Length > 32 ? outcome[..32] : outcome,
-            description.Length > 100 ? description[..100] : description);
-        try
+        // Never write a JSONL file in AppData or near the application.
+        // Only fixed event names; user-supplied secrets/descriptions are not persisted.
+        if (category is not ("APP" or "PIN" or "USB" or "FIDO")) return;
+        string safe = new string(outcome.ToLowerInvariant().Where(c => c is >= 'a' and <= 'z' or >= '0' and <= '9' or '-').Take(25).ToArray());
+        if (safe.Length == 0) safe = "event";
+        var access = VaultAccessController.Instance;
+        lock (access.SyncRoot)
         {
-            lock (_sync)
-            {
-                Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
-                File.AppendAllText(_path, JsonSerializer.Serialize(entry) + Environment.NewLine);
-                // Retain only the latest ~1 MB to limit growth.
-                if (new FileInfo(_path).Length > 1024 * 1024)
-                {
-                    var lines = File.ReadLines(_path).TakeLast(2000).ToArray();
-                    File.WriteAllLines(_path, lines);
-                }
-            }
+            if (access.IsUnlocked) access.Session.RecordAudit(category.ToLowerInvariant() + "-" + safe);
         }
-        catch (IOException) { /* Audit failure must not approve or deny FIDO automatically. */ }
-        catch (UnauthorizedAccessException) { }
     }
 
     public IReadOnlyList<Entry> Recent(int count = 20)
     {
-        lock (_sync)
+        var access = VaultAccessController.Instance;
+        lock (access.SyncRoot)
         {
-            if (!File.Exists(_path)) return Array.Empty<Entry>();
-            try
-            {
-                return File.ReadLines(_path).TakeLast(Math.Clamp(count, 1, 500))
-                    .Select(line => { try { return JsonSerializer.Deserialize<Entry>(line); } catch (JsonException) { return null; } })
-                    .Where(x => x is not null).Select(x => x!).Reverse().ToArray();
-            }
-            catch (IOException) { return Array.Empty<Entry>(); }
-            catch (UnauthorizedAccessException) { return Array.Empty<Entry>(); }
+            if (!access.IsUnlocked) return Array.Empty<Entry>();
+            return access.Session.GetAudit().TakeLast(Math.Clamp(count, 1, 500)).Reverse()
+                .Select(e => new Entry(e.WhenUtc, "SEC", e.EventType, "")).ToArray();
         }
     }
 

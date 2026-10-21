@@ -4,10 +4,12 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
+using Avalonia.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Nexora.Gui.Configuration;
 using Nexora.Gui.Dialogs;
 using Nexora.Gui.Services;
+using Nexora.Gui.Security;
 
 namespace Nexora.Gui;
 
@@ -40,7 +42,8 @@ public partial class App : Application
     private static ServiceProvider BuildServiceProvider()
     {
         var services = new ServiceCollection();
-        services.AddSingleton<IStickConfigStore, StickConfigStore>();
+        services.AddSingleton(VaultAccessController.Instance);
+        services.AddSingleton<IStickConfigStore, VaultStickConfigStore>();
         services.AddSingleton<ICredentialPrompt, WindowCredentialPrompt>();
         services.AddSingleton<IStickManager, StickManager>();
         services.AddTransient<MainWindow>();
@@ -50,16 +53,38 @@ public partial class App : Application
     private void SetupTrayIcon(MainWindow mainWindow, IClassicDesktopStyleApplicationLifetime desktop)
     {
         var showItem = new NativeMenuItem("Ouvrir Nexora");
-        showItem.Click += (_, _) => ShowMainWindow(mainWindow);
+        showItem.Click += (_, _) => Dispatcher.UIThread.Post(mainWindow.OpenFromTray);
+
+        var manageItem = new NativeMenuItem("Gérer mes clés");
+        manageItem.Click += (_, _) => Dispatcher.UIThread.Post(mainWindow.ManageKeysFromTray);
+
+        var addItem = new NativeMenuItem("Ajouter une clé...");
+        addItem.Click += (_, _) => Dispatcher.UIThread.Post(async () => await RunTrayActionAsync(mainWindow, mainWindow.AddKeyFromTrayAsync));
+
+        var refreshItem = new NativeMenuItem("Actualiser les clés");
+        refreshItem.Click += (_, _) => Dispatcher.UIThread.Post(mainWindow.RefreshFromTray);
+
+        var historyItem = new NativeMenuItem("Historique de sécurité");
+        historyItem.Click += (_, _) => Dispatcher.UIThread.Post(async () => await RunTrayActionAsync(mainWindow, mainWindow.HistoryFromTrayAsync));
+
+        var lockItem = new NativeMenuItem("Verrouiller Nexora");
+        lockItem.Click += (_, _) => Dispatcher.UIThread.Post(async () => await RunTrayActionAsync(mainWindow, mainWindow.LockFromTrayAsync));
 
         var exitItem = new NativeMenuItem("Quitter Nexora");
-        exitItem.Click += (_, _) =>
+        exitItem.Click += (_, _) => Dispatcher.UIThread.Post(async () =>
         {
-            mainWindow.ForceClose();
-            desktop.Shutdown();
-        };
+            if (await RunTrayActionAsync(mainWindow, mainWindow.ForceCloseAsync))
+                desktop.Shutdown();
+        });
 
-        var menu = new NativeMenu { Items = { showItem, exitItem } };
+        var menu = new NativeMenu
+        {
+            Items =
+            {
+                showItem, manageItem, addItem, refreshItem, historyItem,
+                lockItem, exitItem
+            }
+        };
 
         _trayIcon = new TrayIcon
         {
@@ -67,14 +92,22 @@ public partial class App : Application
             ToolTipText = "Nexora · Virtual Security Key",
             Menu = menu,
         };
-        _trayIcon.Clicked += (_, _) => ShowMainWindow(mainWindow);
+        _trayIcon.Clicked += (_, _) => Dispatcher.UIThread.Post(mainWindow.OpenFromTray);
     }
 
-    private static void ShowMainWindow(MainWindow window)
+    private static async Task<bool> RunTrayActionAsync(MainWindow mainWindow, Func<Task> action)
     {
-        window.Show();
-        window.WindowState = WindowState.Normal;
-        window.Activate();
+        try
+        {
+            await action();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            mainWindow.OpenFromTray();
+            await MessageWindow.ShowAsync(mainWindow, "Nexora - Opération impossible", ex.Message);
+            return false;
+        }
     }
 
     private static WindowIcon LoadIcon()

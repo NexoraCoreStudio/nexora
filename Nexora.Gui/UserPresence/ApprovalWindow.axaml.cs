@@ -53,7 +53,7 @@ public partial class ApprovalWindow : Window
 
     private void Approve()
     {
-        if (!LocalPinGuard.Instance.Verify(ApprovalPin.Text ?? string.Empty, out var error))
+        if (!VaultAccessController.Instance.VerifyApproval(ApprovalPin.Text ?? string.Empty, out var error))
         {
             ApprovalError.Text = error;
             ApprovalError.IsVisible = true;

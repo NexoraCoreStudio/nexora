@@ -1,0 +1,32 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Nexora.Gui.Dialogs.RecoveryCodeWindow"
+        Title="Nexora — Code de récupération"
+        Width="760" SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Background="#0B1220">
+    <StackPanel Margin="24" Spacing="14">
+        <TextBlock Text="Sauvegarde du code de récupération" FontSize="22" FontWeight="Bold" Foreground="#F0F7FF"/>
+        <TextBlock Text="Ce code secret de 256 bits est affiché une seule fois. Il permet d'ouvrir votre coffre sur un autre profil Windows. Conservez-le hors de la clé USB, dans un endroit sûr."
+                   Foreground="#AFBCD2" TextWrapping="Wrap"/>
+        <Border Background="#16233B" BorderBrush="#7154AB" BorderThickness="1" CornerRadius="10" Padding="12">
+            <TextBox x:Name="RecoveryCodeBox" IsReadOnly="True" FontFamily="Consolas" FontSize="15"
+                     TextWrapping="Wrap" HorizontalAlignment="Stretch" MinHeight="44"/>
+        </Border>
+        <TextBlock Text="Cliquez dans le champ pour sélectionner le code (Ctrl+A, Ctrl+C), ou utilisez « Copier le code ». Le bouton copie les 64 caractères exacts, sans espaces." 
+                   FontSize="12" Foreground="#A5B7D0" TextWrapping="Wrap"/>
+        <TextBlock Text="Attention : le presse-papiers Windows peut être accessible à d'autres logiciels et à l'historique du presse-papiers. Effacez-le après avoir sauvegardé le code." 
+                   FontSize="12" Foreground="#F2BF88" TextWrapping="Wrap"/>
+        <TextBlock x:Name="CopyStatus" IsVisible="False" Foreground="#72E1C6" FontSize="12" TextWrapping="Wrap"/>
+        <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0">
+            <CheckBox x:Name="SavedCodeCheckBox" Grid.Column="0" VerticalAlignment="Center"
+                      Content="J'ai sauvegardé ce code hors ligne."/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                <Button Content="Copier le code" Click="CopyCode_Click"/>
+                <Button Content="Continuer" Classes="accent" Click="Continue_Click"/>
+            </StackPanel>
+        </Grid>
+    </StackPanel>
+</Window>

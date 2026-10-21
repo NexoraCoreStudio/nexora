@@ -4,7 +4,7 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Nexora.Gui.Configuration;
 using Nexora.Gui.Services;
-using Nexora.SecretManager.FileBasedSecretStore;
+
 using Nexora.SecretManager.MtlsBasedSecretStoreClient;
 
 namespace Nexora.Gui.Dialogs;
@@ -22,7 +22,7 @@ public partial class AddStickWindow : Window
     public AddStickWindow()
     {
         InitializeComponent();
-        NameBox.Text = "Nexora-FileBased";
+        NameBox.Text = "Nexora-Vault";
         SerialNumberBox.Text = "NEXORA-" + Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
         SecretManagerTypeBox.SelectedIndex = 1;
     }
@@ -66,8 +66,8 @@ public partial class AddStickWindow : Window
         if (FilePanel == null || MtlsPanel == null)
             return;
 
-        FilePanel.IsVisible = SecretManagerTypeBox.SelectedIndex == 1;
-        MtlsPanel.IsVisible = SecretManagerTypeBox.SelectedIndex == 2;
+        FilePanel.IsVisible = false;
+        MtlsPanel.IsVisible = false;
     }
 
     private async void BrowseClientCert_Click(object? sender, RoutedEventArgs e) => await BrowseForCertAsync(MtlsClientCertPathBox);
@@ -139,74 +139,21 @@ public partial class AddStickWindow : Window
         }
 
         SecretManagerConfig secretManager;
-        string? filePassword = null;
-        string? mtlsClientCertSourcePath = null;
-        string? mtlsServerCaCertSourcePath = null;
 
         switch (SecretManagerTypeBox.SelectedIndex)
         {
             case 0:
-                secretManager = new MemorySecretManagerConfig();
-                break;
+                ShowError("Le mode memoire est desactive en version 1.2 : utiliser le coffre Nexora.");
+                return;
 
             case 1:
-                if (string.IsNullOrWhiteSpace(FileUsernameBox.Text) || string.IsNullOrEmpty(FilePasswordBox.Text))
-                {
-                    ShowError("Username and password are required for a file-based secret manager.");
-                    return;
-                }
-                secretManager = new FileSecretManagerConfig { Username = FileUsernameBox.Text };
-                filePassword = FilePasswordBox.Text;
+                // No per-stick plaintext directory, PIN or password: Nexora.vault protects it.
+                secretManager = new FileSecretManagerConfig { Username = "NexoraVault" };
                 break;
 
             case 2:
-                if (string.IsNullOrWhiteSpace(MtlsServerAddressBox.Text) || !Uri.TryCreate(MtlsServerAddressBox.Text, UriKind.Absolute, out var serverAddress))
-                {
-                    ShowError("A valid server base address is required.");
-                    return;
-                }
-                if (string.IsNullOrWhiteSpace(MtlsClientCertPathBox.Text) || string.IsNullOrWhiteSpace(MtlsServerCaCertPathBox.Text))
-                {
-                    ShowError("Client certificate and server CA certificate are required.");
-                    return;
-                }
-
-                mtlsClientCertSourcePath = MtlsClientCertPathBox.Text;
-                mtlsServerCaCertSourcePath = MtlsServerCaCertPathBox.Text;
-                var mtlsClientCertPassword = string.IsNullOrEmpty(MtlsClientCertPasswordBox.Text) ? null : MtlsClientCertPasswordBox.Text;
-                // Leave blank for a passwordless server-side identity - the mTLS certificate alone
-                // authenticates it, and the server rejects a login attempt outright either way.
-                var mtlsLoginPassword = string.IsNullOrEmpty(MtlsLoginPasswordBox.Text) ? null : MtlsLoginPasswordBox.Text;
-
-                CreateButton.IsEnabled = false;
-                ErrorText.IsVisible = false;
-                try
-                {
-                    // Tested against the originally picked paths, before anything is copied or
-                    // persisted - a bad cert/password/unreachable server leaves the dialog exactly
-                    // as the user left it, with nothing created.
-                    await TestMtlsConnectionAsync(serverAddress, mtlsLoginPassword,
-                        mtlsClientCertSourcePath, mtlsClientCertPassword, mtlsServerCaCertSourcePath);
-                }
-                catch (Exception ex)
-                {
-                    ShowError($"Could not connect: {ex.Message}");
-                    return;
-                }
-                finally
-                {
-                    CreateButton.IsEnabled = true;
-                }
-
-                secretManager = new MtlsSecretManagerConfig
-                {
-                    ServerBaseAddress = serverAddress,
-                    ClientCertificatePath = "certs/client.pfx",
-                    ClientCertificatePassword = mtlsClientCertPassword,
-                    ServerCaCertificatePath = "certs/ca.crt",
-                    RequiresLoginPassword = mtlsLoginPassword != null,
-                };
-                break;
+                ShowError("mTLS n'est pas encore pris en charge par Nexora.vault.");
+                return;
 
             default:
                 ShowError("Select a secret manager.");
@@ -217,25 +164,6 @@ public partial class AddStickWindow : Window
         {
             _result = _configStore!.Create(NameBox.Text!, SerialNumberBox.Text!, secretManager);
 
-            // Eagerly initialize the encrypted store now, while the password is still on screen,
-            // instead of waiting for the first Connect - it's never written to config.json either
-            // way, so this is purely about not losing the moment the user has it in mind.
-            if (filePassword != null)
-            {
-                _ = new FileBasedSecretStore(_configStore.GetKeyStoreDirectory(_result.Name), FileUsernameBox.Text!, filePassword, _configStore.GetAttestationCertificateDirectory(_result.Name), _configStore.GetStickDirectory(_result.Name));
-                _ = new FileBasedCredentialStore(_configStore.GetCredentialStoreDirectory(_result.Name), FileUsernameBox.Text!, filePassword, _configStore.GetStickDirectory(_result.Name));
-            }
-
-            // Now that the connection has already been verified against these exact files, copy
-            // them into the stick's own folder so it stays self-contained (same as the file-based
-            // backend) instead of depending on wherever the originals happen to live on disk.
-            if (mtlsClientCertSourcePath != null)
-            {
-                var certsDirectory = _configStore.GetAttestationCertificateDirectory(_result.Name);
-                Directory.CreateDirectory(certsDirectory);
-                File.Copy(mtlsClientCertSourcePath, Path.Combine(certsDirectory, "client.pfx"), overwrite: true);
-                File.Copy(mtlsServerCaCertSourcePath!, Path.Combine(certsDirectory, "ca.crt"), overwrite: true);
-            }
         }
         catch (Exception ex)
         {

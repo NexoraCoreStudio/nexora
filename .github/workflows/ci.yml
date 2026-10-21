@@ -16,10 +16,17 @@ jobs:
         with:
           repository: NexoraCoreStudio/nexora-usb
           path: nexora-usb
+          token: ${{ secrets.NEXORA_REPO_READ_TOKEN }}
       - name: Checkout nexora
         uses: actions/checkout@v4
         with:
           path: nexora
+      - name: Checkout private nexora-crypt
+        uses: actions/checkout@v4
+        with:
+          repository: NexoraCoreStudio/nexora-crypt
+          path: nexora-crypt
+          token: ${{ secrets.NEXORA_REPO_READ_TOKEN }}
       - name: Setup .NET 8
         uses: actions/setup-dotnet@v4
         with:
@@ -30,3 +37,7 @@ jobs:
         run: dotnet build nexora/Nexora.sln -c Release --no-restore
       - name: Test
         run: dotnet test nexora/Nexora.sln -c Release --no-build
+      - name: Functional crypt and vault/FIDO tests
+        run: |
+          dotnet run --project nexora-crypt/Nexora.Crypt.Tests/Nexora.Crypt.Tests.csproj -c Release
+          dotnet run --project nexora-fido/Nexora.SecretManager.VaultSecretStore.Tests/Nexora.SecretManager.VaultSecretStore.Tests.csproj -c Release

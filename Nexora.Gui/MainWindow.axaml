@@ -113,9 +113,10 @@
                         <TextBlock x:Name="LockInfo" Text="Entre ton code de 4 chiffres" HorizontalAlignment="Center" Foreground="#A5B7D0" FontSize="13" />
                         <TextBox x:Name="PinEntry" PasswordChar="●" MaxLength="4" Watermark="Code PIN (4 chiffres)" HorizontalContentAlignment="Center" FontSize="19" KeyDown="PinEntry_KeyDown" />
                         <TextBox x:Name="PinConfirm" PasswordChar="●" MaxLength="4" Watermark="Confirmer le PIN" HorizontalContentAlignment="Center" FontSize="19" IsVisible="False" KeyDown="PinEntry_KeyDown" />
+                        <TextBox x:Name="RecoveryCodeEntry" PasswordChar="●" MaxLength="80" Watermark="Code de recuperation (autre PC seulement)" HorizontalContentAlignment="Center" FontSize="12" IsVisible="False" />
                         <TextBlock x:Name="PinError" Foreground="#FF8C93" FontSize="12" TextWrapping="Wrap" IsVisible="False" />
                         <Button x:Name="UnlockButton" Classes="accent" Content="Déverrouiller" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="Unlock_Click" />
-                        <TextBlock Text="Ce PIN protège l'interface et les autorisations. Le PIN CTAP2 est indépendant." TextWrapping="Wrap" TextAlignment="Center" FontSize="11" Foreground="#7E91AE" />
+                        <TextBlock Text="Le coffre chiffré est conservé à côté de Nexora.exe. Le PIN CTAP2 est indépendant." TextWrapping="Wrap" TextAlignment="Center" FontSize="11" Foreground="#7E91AE" />
                     </StackPanel>
                 </Border>
             </Grid>

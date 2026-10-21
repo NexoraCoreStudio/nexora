@@ -6,7 +6,8 @@ using Nexora.Usb.Vhci;
 using Nexora.Gui.Configuration;
 using Nexora.Gui.UserPresence;
 using Nexora.SecretManager;
-using Nexora.SecretManager.FileBasedSecretStore;
+using Nexora.SecretManager.VaultSecretStore;
+using Nexora.Gui.Security;
 using Nexora.SecretManager.MemoryBasedSecretStore;
 using Nexora.SecretManager.MtlsBasedSecretStoreClient;
 
@@ -24,16 +25,18 @@ public sealed class StickManager : IStickManager
 
     private readonly IStickConfigStore _configStore;
     private readonly ICredentialPrompt _credentialPrompt;
+    private readonly VaultAccessController _vault;
     private readonly UsbIpServer _server = new(Host, Port);
     private readonly Dictionary<string, ConnectedStick> _connected = new();
 
     private bool _serverStarted;
     private int _nextDeviceSlot = 1;
 
-    public StickManager(IStickConfigStore configStore, ICredentialPrompt credentialPrompt)
+    public StickManager(IStickConfigStore configStore, ICredentialPrompt credentialPrompt, VaultAccessController vault)
     {
         _configStore = configStore;
         _credentialPrompt = credentialPrompt;
+        _vault = vault;
     }
 
     public IReadOnlyList<StickConfig> GetConfiguredSticks() => _configStore.LoadAll();
@@ -42,6 +45,8 @@ public sealed class StickManager : IStickManager
 
     public async Task<StickAttachResult> ConnectAsync(string stickName)
     {
+        if (!_vault.IsUnlocked)
+            return new StickAttachResult(StickAttachOutcome.Failed, string.Empty, "Nexora.vault est verrouille.");
         if (_connected.ContainsKey(stickName))
             return new StickAttachResult(StickAttachOutcome.Success, string.Empty, null);
 
@@ -102,6 +107,12 @@ public sealed class StickManager : IStickManager
         return result;
     }
 
+    public async Task DisconnectAllAsync()
+    {
+        foreach (string name in _connected.Keys.ToArray())
+            await DisconnectAsync(name);
+    }
+
     public Task<StickAttachResult> DisconnectAsync(string stickName)
     {
         if (!_connected.TryGetValue(stickName, out var connectedStick))
@@ -146,18 +157,13 @@ public sealed class StickManager : IStickManager
             case MemorySecretManagerConfig:
                 return new Fido2SecretManager(new MemoryBasedSecretStore(), new InMemoryCredentialStore());
 
-            case FileSecretManagerConfig fileConfig:
+            case FileSecretManagerConfig:
             {
-                var credentials = await _credentialPrompt.RequestCredentialsAsync(config.Name, requireUsername: true, fileConfig.Username);
-                if (credentials == null)
-                    return null;
-
-                var (username, password) = credentials.Value;
-                // FileBasedSecretStore also implements IPinStateStore, persisting the PIN hash and
-                // retry counter alongside the signing keys it already protects in the same directory -
-                // Fido2SecretManager detects and forwards to it automatically.
-                var keyStore = new SecretManager.FileBasedSecretStore.FileBasedSecretStore(_configStore.GetKeyStoreDirectory(config.Name), username, password, _configStore.GetAttestationCertificateDirectory(config.Name), _configStore.GetStickDirectory(config.Name));
-                var credentialStore = new FileBasedCredentialStore(_configStore.GetCredentialStoreDirectory(config.Name), username, password, _configStore.GetStickDirectory(config.Name));
+                // Nexora 1.2: both signing keys and credentials are part of one encrypted vault.
+                // A per-stick filesystem path and password are no longer used.
+                var session = _vault.Session;
+                var keyStore = new VaultKeyStore(session, _vault.SyncRoot, config.Name);
+                var credentialStore = new VaultCredentialStore(session, _vault.SyncRoot, config.Name);
                 return new Fido2SecretManager(keyStore, credentialStore);
             }
 
