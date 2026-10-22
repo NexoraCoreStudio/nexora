@@ -10,32 +10,50 @@ using Nexora.Gui.Configuration;
 using Nexora.Gui.Dialogs;
 using Nexora.Gui.Services;
 using Nexora.Gui.Security;
+using Nexora.Gui.Updates;
+using Nexora.Gui.DevTools;
 
 namespace Nexora.Gui;
 
 public partial class App : Application
 {
-    // Nexora resource embedded in the Nexora GUI assembly.
     private static readonly Uri IconUri = new("avares://Nexora/Assets/Nexora_Icon.png");
-
     private TrayIcon? _trayIcon;
     private ServiceProvider? _services;
+    private UpdateCoordinator? _updater;
 
-    public override void Initialize()
-    {
-        AvaloniaXamlLoader.Load(this);
-    }
+    public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
     public override void OnFrameworkInitializationCompleted()
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            DevConsole.Start();
+            DevConsole.Write("BOOT", "application-start");
             _services = BuildServiceProvider();
             var mainWindow = _services.GetRequiredService<MainWindow>();
             desktop.MainWindow = mainWindow;
+            var manager = _services.GetRequiredService<IStickManager>();
+            _updater = new UpdateCoordinator(mainWindow, desktop, () =>
+            {
+                // If connection status is unknown, never attempt an unattended update.
+                try
+                {
+                    if (!VaultAccessController.Instance.IsUnlocked) return false;
+                    return manager.GetConfiguredSticks().Any(s => manager.IsConnected(s.Name));
+                }
+                catch { return true; }
+            });
+            NexoraTitleBar.Attach(mainWindow, _updater);
             SetupTrayIcon(mainWindow, desktop);
+            mainWindow.Opened += (_, _) => _updater.Start();
+            desktop.Exit += (_, _) =>
+            {
+                DevConsole.Write("BOOT", "application-stop");
+                _updater?.Dispose();
+                _services?.Dispose();
+            };
         }
-
         base.OnFrameworkInitializationCompleted();
     }
 
@@ -67,6 +85,13 @@ public partial class App : Application
         var historyItem = new NativeMenuItem("Historique de sécurité");
         historyItem.Click += (_, _) => Dispatcher.UIThread.Post(async () => await RunTrayActionAsync(mainWindow, mainWindow.HistoryFromTrayAsync));
 
+        var updateItem = new NativeMenuItem("Vérifier les mises à jour");
+        updateItem.Click += (_, _) => Dispatcher.UIThread.Post(async () =>
+        {
+            mainWindow.OpenFromTray();
+            if (_updater != null) await _updater.CheckNowAsync();
+        });
+
         var lockItem = new NativeMenuItem("Verrouiller Nexora");
         lockItem.Click += (_, _) => Dispatcher.UIThread.Post(async () => await RunTrayActionAsync(mainWindow, mainWindow.LockFromTrayAsync));
 
@@ -82,7 +107,7 @@ public partial class App : Application
             Items =
             {
                 showItem, manageItem, addItem, refreshItem, historyItem,
-                lockItem, exitItem
+                updateItem, lockItem, exitItem
             }
         };
 

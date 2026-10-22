@@ -1,8 +1,9 @@
 using Nexora.Gui.Security;
+using Nexora.Gui.DevTools;
 
 namespace Nexora.Gui.Telemetry;
 
-/// <summary>All application security events are recorded within encrypted Nexora.vault.</summary>
+/// <summary>Encrypted audit in the vault; development telemetry includes event types only.</summary>
 public sealed class SecurityAudit
 {
     public static SecurityAudit Instance { get; } = new();
@@ -10,11 +11,13 @@ public sealed class SecurityAudit
 
     public void Record(string category, string outcome, string description = "")
     {
-        // Never write a JSONL file in AppData or near the application.
-        // Only fixed event names; user-supplied secrets/descriptions are not persisted.
+        // Never write PINs, raw CTAP messages, secrets, serials or URLs.
         if (category is not ("APP" or "PIN" or "USB" or "FIDO")) return;
-        string safe = new string(outcome.ToLowerInvariant().Where(c => c is >= 'a' and <= 'z' or >= '0' and <= '9' or '-').Take(25).ToArray());
+        string safe = new string(outcome.ToLowerInvariant()
+            .Where(c => c is >= 'a' and <= 'z' or >= '0' and <= '9' or '-')
+            .Take(25).ToArray());
         if (safe.Length == 0) safe = "event";
+        DevConsole.Write(category, safe);
         var access = VaultAccessController.Instance;
         lock (access.SyncRoot)
         {

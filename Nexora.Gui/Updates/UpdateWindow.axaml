@@ -1,0 +1,35 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Nexora.Gui.Updates.UpdateWindow"
+        Icon="avares://Nexora/Assets/Nexora_Icon.png"
+        Title="Nexora · Mise à jour" Width="540" Height="430"
+        MinWidth="510" MinHeight="390" CanResize="False"
+        WindowStartupLocation="CenterOwner" Background="#0B1220" RequestedThemeVariant="Dark">
+    <Grid Margin="28" RowDefinitions="Auto,*,Auto">
+        <StackPanel Spacing="8" Margin="0,0,0,18">
+            <TextBlock Text="NOUVELLE VERSION DISPONIBLE" FontSize="11" FontWeight="Bold" Foreground="#7BE1F0"/>
+            <TextBlock x:Name="VersionLabel" Text="Nexora" FontSize="27" FontWeight="Bold" Foreground="#F2E7FF"/>
+            <TextBlock Text="Mise à jour vérifiée depuis GitHub Releases" Foreground="#9CAEC8" FontSize="12"/>
+        </StackPanel>
+        <Border Grid.Row="1" Background="#152238" CornerRadius="12" Padding="16" Margin="0,0,0,18">
+            <StackPanel Spacing="12">
+                <TextBlock Text="Notes de version" FontSize="14" FontWeight="SemiBold" Foreground="#DFC5FF"/>
+                <ScrollViewer Height="93" VerticalScrollBarVisibility="Auto">
+                    <TextBlock x:Name="ReleaseNotes" TextWrapping="Wrap" Foreground="#C9D7EA" FontSize="12"/>
+                </ScrollViewer>
+                <CheckBox x:Name="AutomaticCheck" Content="Faire automatiquement les prochaines mises à jour"
+                          Foreground="#EAF3FF" Checked="AutomaticChanged" Unchecked="AutomaticChanged" />
+                <TextBlock Text="Nexora vérifie GitHub chaque heure. Les clés USB virtuelles actives nécessitent une confirmation avant la fermeture."
+                           FontSize="11" Foreground="#9AAEC9" TextWrapping="Wrap"/>
+                <ProgressBar x:Name="DownloadProgress" Minimum="0" Maximum="100" Height="8"
+                             IsVisible="False"/>
+                <TextBlock x:Name="StatusLabel" Foreground="#91E4E4" FontSize="12" TextWrapping="Wrap"/>
+            </StackPanel>
+        </Border>
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto">
+            <Button x:Name="LaterButton" Grid.Column="1" Content="Plus tard" Click="Later_Click"/>
+            <Button x:Name="InstallButton" Grid.Column="2" Margin="10,0,0,0" Classes="accent" Content="Installer la mise à jour"
+                    Click="Install_Click"/>
+        </Grid>
+    </Grid>
+</Window>
