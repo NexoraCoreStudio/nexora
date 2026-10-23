@@ -12,6 +12,7 @@ using Nexora.Gui.Security;
 using Nexora.Gui.Services;
 using Nexora.Gui.Telemetry;
 using Nexora.Gui.Updates;
+using Nexora.Gui.Vault;
 
 namespace Nexora.Gui.Settings;
 
@@ -107,6 +108,29 @@ internal sealed class SettingsWindow : Window
         });
         var updatesActions = Buttons(_save, check, resetPreferences);
         stack.Children.Add(updatesActions);
+        stack.Children.Add(new Border { Height = 1, Background = Brush.Parse("#2A3B55"), Margin = new Thickness(0, 7) });
+        stack.Children.Add(Heading("NEXORA VAULT · SAUVEGARDE ET RESTAURATION"));
+        stack.Children.Add(new TextBlock
+        {
+            Text = "Exportez votre coffre dans un fichier .nxbackup chiffré par un mot de passe indépendant. " +
+                   "Pour restaurer sur un autre compte Windows, conservez également le code de récupération d'origine " +
+                   "et votre PIN. La restauration préserve l'ancien coffre avant le remplacement.",
+            Foreground = Brush.Parse("#B8C7DD"), TextWrapping = TextWrapping.Wrap, FontSize = 12
+        });
+        var exportVault = ActionButton("Sauvegarder le coffre", "#63459D");
+        exportVault.IsEnabled = _vault.IsConfigured && _vault.IsUnlocked;
+        exportVault.Click += async (_, _) =>
+        {
+            if (_busy) return;
+            await VaultBackupWindow.ShowAsync(this, _main, _sticks, restore: false);
+        };
+        var importVault = ActionButton("Restaurer une sauvegarde", "#315579");
+        importVault.Click += async (_, _) =>
+        {
+            if (_busy) return;
+            await VaultBackupWindow.ShowAsync(this, _main, _sticks, restore: true);
+        };
+        stack.Children.Add(Buttons(exportVault, importVault));
         stack.Children.Add(new Border { Height = 1, Background = Brush.Parse("#2A3B55"), Margin = new Thickness(0, 7) });
         stack.Children.Add(Heading("RÉINITIALISATION"));
         stack.Children.Add(new TextBlock
