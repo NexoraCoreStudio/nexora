@@ -31,7 +31,7 @@ internal sealed class UpdateReleaseClient : IDisposable
         {
             Timeout = TimeSpan.FromMinutes(15)
         };
-        _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Nexora", "1.3.5"));
+        _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Nexora", typeof(App).Assembly.GetName().Version?.ToString(3) ?? "1.4.0"));
         _http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
         _http.DefaultRequestHeaders.Add("X-GitHub-Api-Version", "2022-11-28");
     }

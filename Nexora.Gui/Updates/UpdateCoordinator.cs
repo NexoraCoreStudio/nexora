@@ -103,7 +103,7 @@ internal sealed class UpdateCoordinator : IDisposable
         else if (!await _checkGate.WaitAsync(0)) return;
         try
         {
-            var version = typeof(App).Assembly.GetName().Version ?? new Version(1, 3, 5);
+            var version = typeof(App).Assembly.GetName().Version ?? new Version(1, 4, 0);
             DevConsole.Write("UPDATE", "check-start");
             var release = await _client.GetLatestAsync(version, _preferences.IncludePrereleases, _stop.Token);
             _availableRelease = release;

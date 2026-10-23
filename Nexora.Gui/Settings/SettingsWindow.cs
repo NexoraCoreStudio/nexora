@@ -7,6 +7,7 @@ using Avalonia.Media;
 using Microsoft.Win32;
 using Nexora.Crypt;
 using Nexora.Gui.Dialogs;
+using Nexora.Gui.DevTools;
 using Nexora.Gui.Security;
 using Nexora.Gui.Services;
 using Nexora.Gui.Telemetry;
@@ -89,7 +90,7 @@ internal sealed class SettingsWindow : Window
         });
         stack.Children.Add(new TextBlock
         {
-            Text = "Nexora 1.3.5 · préférences locales et maintenance",
+            Text = "Nexora " + NexoraTitleBar.DisplayVersion + " · préférences locales et maintenance",
             Foreground = Brush.Parse("#99AFCB"), FontSize = 12
         });
         stack.Children.Add(Heading("MISES À JOUR"));

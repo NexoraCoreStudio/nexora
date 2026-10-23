@@ -6,7 +6,7 @@
     <AssemblyTitle>Nexora</AssemblyTitle>
     <TargetFramework>net8.0-windows</TargetFramework>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
-    <Version>1.3.5</Version>
+    <Version>1.4.0</Version>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
@@ -51,6 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\nexora-usb\Nexora.Usb\Nexora.Usb.csproj" />
+    <ProjectReference Include="..\..\nexora-fido\Nexora.Fido\Nexora.Fido.csproj" />
     <ProjectReference Include="..\..\nexora-fido\Nexora.SecretManager.VaultSecretStore\Nexora.SecretManager.VaultSecretStore.csproj" />
     <ProjectReference Include="..\..\nexora-crypt\Nexora.Crypt\Nexora.Crypt.csproj" />
     <ProjectReference Include="..\..\nexora-fido\Nexora.SecretManager.MtlsBasedSecretStoreClient\Nexora.SecretManager.MtlsBasedSecretStoreClient.csproj" />
