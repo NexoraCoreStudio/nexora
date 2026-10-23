@@ -1,0 +1,312 @@
+using System.Diagnostics;
+using System.Security.Cryptography;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Layout;
+using Avalonia.Media;
+using Microsoft.Win32;
+using Nexora.Crypt;
+using Nexora.Gui.Dialogs;
+using Nexora.Gui.Security;
+using Nexora.Gui.Services;
+using Nexora.Gui.Telemetry;
+using Nexora.Gui.Updates;
+
+namespace Nexora.Gui.Settings;
+
+/// <summary>
+/// Local settings. The private DEV extension is deliberately not exposed here.
+/// Reset makes a verified encrypted backup; uninstall never deletes user vault data.
+/// </summary>
+internal sealed class SettingsWindow : Window
+{
+    private const string UninstallRegistryKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\Nexora";
+    private readonly MainWindow _main;
+    private readonly UpdateCoordinator _updates;
+    private readonly IStickManager _sticks;
+    private readonly VaultAccessController _vault = VaultAccessController.Instance;
+    private readonly CheckBox _autoInstall;
+    private readonly CheckBox _includePrereleases;
+    private readonly CheckBox _startupCheck;
+    private readonly CheckBox _hourlyCheck;
+    private readonly TextBox _resetWord;
+    private readonly TextBox _resetPin;
+    private readonly TextBlock _status;
+    private readonly Button _save;
+    private readonly Button _resetVault;
+    private bool _busy;
+
+    public static Task ShowAsync(MainWindow main, UpdateCoordinator updates, IStickManager sticks) =>
+        new SettingsWindow(main, updates, sticks).ShowDialog(main);
+
+    private SettingsWindow(MainWindow main, UpdateCoordinator updates, IStickManager sticks)
+    {
+        _main = main;
+        _updates = updates;
+        _sticks = sticks;
+        Title = "Nexora · Paramètres";
+        Width = 640;
+        Height = 715;
+        MinWidth = 520;
+        MinHeight = 570;
+        WindowStartupLocation = WindowStartupLocation.CenterOwner;
+        Background = Brush.Parse("#0C1526");
+        _autoInstall = Option("Installer automatiquement les mises à jour", updates.AutoInstall);
+        _includePrereleases = Option("Recevoir aussi les préversions GitHub", updates.IncludePrereleases);
+        _startupCheck = Option("Vérifier les mises à jour au lancement", updates.CheckOnStartup);
+        _hourlyCheck = Option("Vérifier les mises à jour toutes les heures", updates.CheckEveryHour);
+        _resetWord = new TextBox { Watermark = "Saisir REINITIALISER", MaxLength = 14 };
+        _resetPin = new TextBox { Watermark = "Code PIN actuel (4 chiffres)", MaxLength = 4, PasswordChar = '●' };
+        _status = new TextBlock
+        {
+            Foreground = Brush.Parse("#98DCEB"), TextWrapping = TextWrapping.Wrap,
+            Text = "Les paramètres sont enregistrés uniquement sur ce PC."
+        };
+        _save = ActionButton("Enregistrer", "#244D85");
+        _save.Click += Save_Click;
+        var check = ActionButton("Vérifier maintenant", "#273A52");
+        check.Click += async (_, _) =>
+        {
+            if (_busy) return;
+            Close(); // Avoid opening a second modal over Settings.
+            await _updates.CheckNowAsync();
+        };
+        var resetPreferences = ActionButton("Restaurer les paramètres", "#324056");
+        resetPreferences.Click += ResetPreferences_Click;
+        _resetVault = ActionButton("Réinitialiser Nexora", "#80404E");
+        _resetVault.IsEnabled = _vault.IsConfigured && _vault.IsUnlocked;
+        _resetVault.Click += ResetVault_Click;
+        var uninstall = ActionButton("Désinstaller Nexora", "#7A3443");
+        uninstall.Click += Uninstall_Click;
+        var close = ActionButton("Fermer", "#273A52");
+        close.Click += (_, _) => Close();
+
+        var stack = new StackPanel { Spacing = 13, Margin = new Thickness(24, 20) };
+        stack.Children.Add(new TextBlock
+        {
+            Text = "PARAMÈTRES", FontSize = 23, FontWeight = FontWeight.Bold,
+            Foreground = Brush.Parse("#E7EFFF")
+        });
+        stack.Children.Add(new TextBlock
+        {
+            Text = "Nexora 1.3.5 · préférences locales et maintenance",
+            Foreground = Brush.Parse("#99AFCB"), FontSize = 12
+        });
+        stack.Children.Add(Heading("MISES À JOUR"));
+        stack.Children.Add(_startupCheck);
+        stack.Children.Add(_hourlyCheck);
+        stack.Children.Add(_autoInstall);
+        stack.Children.Add(_includePrereleases);
+        stack.Children.Add(new TextBlock
+        {
+            Text = "Les préversions peuvent être instables. Elles viennent uniquement des Releases du dépôt public Nexora. " +
+                   "Le choix n'active pas le mode console DEV privé.",
+            Foreground = Brush.Parse("#A4B6D1"), TextWrapping = TextWrapping.Wrap,
+            FontSize = 12
+        });
+        var updatesActions = Buttons(_save, check, resetPreferences);
+        stack.Children.Add(updatesActions);
+        stack.Children.Add(new Border { Height = 1, Background = Brush.Parse("#2A3B55"), Margin = new Thickness(0, 7) });
+        stack.Children.Add(Heading("RÉINITIALISATION"));
+        stack.Children.Add(new TextBlock
+        {
+            Text = "Les préférences peuvent être restaurées ci-dessus. La réinitialisation complète déconnecte les clés et " +
+                   "archive le coffre chiffré dans AppData\\Local\\Nexora\\Backups, sans détruire la sauvegarde.",
+            Foreground = Brush.Parse("#B8C7DD"), TextWrapping = TextWrapping.Wrap, FontSize = 12
+        });
+        stack.Children.Add(_resetWord);
+        stack.Children.Add(_resetPin);
+        stack.Children.Add(_resetVault);
+        stack.Children.Add(new Border { Height = 1, Background = Brush.Parse("#2A3B55"), Margin = new Thickness(0, 7) });
+        stack.Children.Add(Heading("DÉSINSTALLATION"));
+        stack.Children.Add(new TextBlock
+        {
+            Text = "Ouvre le programme de désinstallation officiel de Windows. " +
+                   "Les clés FIDO2 et le coffre sont conservés, conformément au comportement de l'installateur.",
+            Foreground = Brush.Parse("#B8C7DD"), TextWrapping = TextWrapping.Wrap, FontSize = 12
+        });
+        stack.Children.Add(uninstall);
+        stack.Children.Add(_status);
+        stack.Children.Add(close);
+        Content = new ScrollViewer { Content = stack, VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto };
+    }
+
+    private static CheckBox Option(string content, bool checkedValue) => new()
+    {
+        Content = content, IsChecked = checkedValue,
+        Foreground = Brush.Parse("#DFE9F8"), FontSize = 13
+    };
+
+    private static TextBlock Heading(string text) => new()
+    {
+        Text = text, FontSize = 12, FontWeight = FontWeight.Bold,
+        Foreground = Brush.Parse("#C59DFF"), Margin = new Thickness(0, 6, 0, 0)
+    };
+
+    private static Button ActionButton(string content, string background) => new()
+    {
+        Content = content, Padding = new Thickness(12, 8),
+        Background = Brush.Parse(background), Foreground = Brushes.White,
+        HorizontalAlignment = HorizontalAlignment.Left
+    };
+
+    private static StackPanel Buttons(params Button[] buttons)
+    {
+        var panel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        foreach (var button in buttons) panel.Children.Add(button);
+        return panel;
+    }
+
+    private async void Save_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (_busy) return;
+        _busy = true;
+        _save.IsEnabled = false;
+        try
+        {
+            await _updates.SaveSettingsAsync(
+                _autoInstall.IsChecked == true,
+                _includePrereleases.IsChecked == true,
+                _startupCheck.IsChecked == true,
+                _hourlyCheck.IsChecked == true);
+            _status.Text = "Préférences enregistrées.";
+        }
+        catch (Exception ex) { _status.Text = "Enregistrement impossible : " + ex.Message; }
+        finally { _busy = false; _save.IsEnabled = true; }
+    }
+
+    private async void ResetPreferences_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (_busy || !await ConfirmWindow.ShowAsync(this, "Restaurer les préférences",
+            "Remettre les options de mise à jour aux valeurs par défaut ? Vos clés FIDO2 ne seront pas touchées.",
+            "Restaurer")) return;
+        _busy = true;
+        try
+        {
+            await _updates.RestoreDefaultSettingsAsync();
+            _autoInstall.IsChecked = false;
+            _includePrereleases.IsChecked = false;
+            _startupCheck.IsChecked = true;
+            _hourlyCheck.IsChecked = true;
+            _status.Text = "Préférences restaurées.";
+        }
+        catch (Exception ex) { _status.Text = "Échec : " + ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private async void ResetVault_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (_busy) return;
+        if (!string.Equals(_resetWord.Text?.Trim(), "REINITIALISER", StringComparison.Ordinal))
+        {
+            _status.Text = "Pour confirmer, écrivez REINITIALISER en majuscules.";
+            return;
+        }
+        string enteredPin = _resetPin.Text ?? "";
+        _resetPin.Text = string.Empty;
+        if (!_vault.VerifyApproval(enteredPin, out var error))
+        {
+            _status.Text = error;
+            return;
+        }
+        if (!await ConfirmWindow.ShowAsync(this, "Réinitialiser Nexora",
+            "Toutes les clés configurées disparaîtront de la nouvelle installation. " +
+            "Le coffre chiffré actuel sera archivé dans AppData\\Local\\Nexora\\Backups. " +
+            "Conservez votre code PIN et votre code de récupération. Continuer ?", "Archiver et réinitialiser")) return;
+
+        _busy = true;
+        _resetVault.IsEnabled = false;
+        try
+        {
+            // Do not archive the vault while an authenticator could still use it.
+            await _sticks.DisconnectAllAsync();
+            if (_sticks.GetConfiguredSticks().Any(key => _sticks.IsConnected(key.Name)))
+                throw new IOException("Une clé FIDO2 est encore connectée. Réinitialisation annulée.");
+            SecurityAudit.Instance.Record("APP", "reset-with-backup");
+            _vault.Lock();
+            string backup = BackupAndDetachVault();
+            _status.Text = "Coffre sauvegardé : " + backup;
+            await MessageWindow.ShowAsync(this, "Réinitialisation terminée",
+                "Votre coffre chiffré a été sauvegardé à :\n" + backup +
+                "\n\nRelancez Nexora pour créer une nouvelle configuration.");
+            Close();
+            await _main.ForceCloseAsync();
+            (Avalonia.Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.Shutdown();
+        }
+        catch (Exception ex)
+        {
+            _status.Text = "Réinitialisation interrompue : " + ex.Message;
+            _resetVault.IsEnabled = _vault.IsConfigured && _vault.IsUnlocked;
+        }
+        finally { _busy = false; }
+    }
+
+    private static string BackupAndDetachVault()
+    {
+        string original = Path.GetFullPath(VaultStore.DefaultVaultPath);
+        if (!File.Exists(original)) throw new FileNotFoundException("Coffre Nexora introuvable.", original);
+        if ((File.GetAttributes(original) & FileAttributes.ReparsePoint) != 0)
+            throw new IOException("Un coffre redirigé par un lien symbolique ne peut pas être réinitialisé.");
+        string directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Nexora", "Backups");
+        Directory.CreateDirectory(directory);
+        string backup = Path.Combine(directory,
+            "Nexora-" + DateTimeOffset.UtcNow.ToString("yyyyMMdd-HHmmss") + "-" +
+            Guid.NewGuid().ToString("N")[..8] + ".vault");
+        string temporary = backup + ".tmp";
+        try
+        {
+            File.Copy(original, temporary, overwrite: false);
+            byte[] originalHash;
+            byte[] backupHash;
+            using (var source = File.OpenRead(original)) originalHash = SHA256.HashData(source);
+            using (var destination = File.OpenRead(temporary)) backupHash = SHA256.HashData(destination);
+            if (!CryptographicOperations.FixedTimeEquals(originalHash, backupHash))
+                throw new IOException("La sauvegarde du coffre n'a pas passé le contrôle d'intégrité.");
+            File.Move(temporary, backup);
+            // Deletion only after a complete, checksum-verified, encrypted backup.
+            File.Delete(original);
+            return backup;
+        }
+        finally { if (File.Exists(temporary)) File.Delete(temporary); }
+    }
+
+    private async void Uninstall_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (_busy) return;
+        try
+        {
+            if (!OperatingSystem.IsWindows()) throw new PlatformNotSupportedException("Windows requis.");
+            using var key = Registry.CurrentUser.OpenSubKey(UninstallRegistryKey);
+            var installed = key?.GetValue("InstallLocation") as string;
+            string? running = Environment.ProcessPath;
+            if (string.IsNullOrWhiteSpace(installed) || string.IsNullOrWhiteSpace(running) ||
+                !Path.GetFullPath(Path.Combine(installed, "Nexora.exe"))
+                    .Equals(Path.GetFullPath(running), StringComparison.OrdinalIgnoreCase))
+                throw new IOException("Désinstallation réservée à Nexora installé par le Setup officiel. " +
+                                      "Une compilation de développement n'est pas une installation Windows.");
+            string setup = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "NexoraInstaller", "Nexora-Setup.exe");
+            if (!File.Exists(setup))
+                throw new FileNotFoundException("Programme de désinstallation introuvable.", setup);
+            if (!await ConfirmWindow.ShowAsync(this, "Désinstaller Nexora",
+                "Désinstaller Nexora de ce PC ? Vos données personnelles et Nexora.vault sont conservés. " +
+                "Le pilote USB/IP n'est pas supprimé.", "Ouvrir le désinstallateur")) return;
+            _busy = true;
+            // The installer waits for this exact Nexora process to exit before showing its wizard.
+            var start = new ProcessStartInfo(setup)
+            {
+                UseShellExecute = true,
+                WorkingDirectory = Path.GetDirectoryName(setup)!
+            };
+            start.ArgumentList.Add("--uninstall");
+            start.ArgumentList.Add("--wait-parent-pid=" + Environment.ProcessId);
+            using var process = Process.Start(start)
+                ?? throw new IOException("Impossible de lancer le désinstallateur.");
+            Close();
+            await _main.ForceCloseAsync();
+            (Avalonia.Application.Current?.ApplicationLifetime as Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.Shutdown();
+        }
+        catch (Exception ex) { _busy = false; _status.Text = "Désinstallation impossible : " + ex.Message; }
+    }
+}

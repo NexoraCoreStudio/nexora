@@ -23,6 +23,39 @@ internal sealed class UpdateCoordinator : IDisposable
     public event Action<bool>? AvailabilityChanged;
     private int _started;
 
+    internal bool AutoInstall => _preferences.AutoInstall;
+    internal bool IncludePrereleases => _preferences.IncludePrereleases;
+    internal bool CheckOnStartup => _preferences.CheckOnStartup;
+    internal bool CheckEveryHour => _preferences.CheckEveryHour;
+
+    internal async Task SaveSettingsAsync(bool autoInstall, bool includePrereleases,
+        bool checkOnStartup, bool checkEveryHour)
+    {
+        bool channelChanged = _preferences.IncludePrereleases != includePrereleases;
+        _preferences.AutoInstall = autoInstall;
+        _preferences.IncludePrereleases = includePrereleases;
+        _preferences.CheckOnStartup = checkOnStartup;
+        _preferences.CheckEveryHour = checkEveryHour;
+        if (channelChanged) _preferences.DismissedTag = string.Empty;
+        _preferences.Save();
+        DevConsole.Write("UPDATE", "preferences-saved", includePrereleases ? "prereleases=enabled" : "prereleases=disabled");
+        if (channelChanged)
+        {
+            _availableRelease = null;
+            AvailabilityChanged?.Invoke(false);
+            await CheckAsync(manual: false, suppressPopup: true);
+        }
+    }
+
+    internal async Task RestoreDefaultSettingsAsync()
+    {
+        _preferences = new UpdatePreferences();
+        _preferences.Save();
+        _availableRelease = null;
+        AvailabilityChanged?.Invoke(false);
+        await CheckAsync(manual: false, suppressPopup: true);
+    }
+
     public UpdateCoordinator(MainWindow mainWindow, IClassicDesktopStyleApplicationLifetime desktop,
         Func<bool> anyConnectedKeys)
     {
@@ -53,31 +86,35 @@ internal sealed class UpdateCoordinator : IDisposable
         try
         {
             // An immediate check on startup, then exactly one check per hour while running.
-            await CheckAsync(manual: false);
+            if (_preferences.CheckOnStartup)
+                await CheckAsync(manual: false);
             using var timer = new PeriodicTimer(TimeSpan.FromHours(1));
             while (await timer.WaitForNextTickAsync(_stop.Token))
-                await CheckAsync(manual: false);
+                if (_preferences.CheckEveryHour)
+                    await CheckAsync(manual: false);
         }
         catch (OperationCanceledException) when (_stop.IsCancellationRequested) { }
     }
 
-    private async Task CheckAsync(bool manual)
+    private async Task CheckAsync(bool manual, bool suppressPopup = false)
     {
         // An explicit click must not disappear while the hourly check is running.
         if (manual) await _checkGate.WaitAsync(_stop.Token);
         else if (!await _checkGate.WaitAsync(0)) return;
         try
         {
-            var version = typeof(App).Assembly.GetName().Version ?? new Version(1, 3, 0);
+            var version = typeof(App).Assembly.GetName().Version ?? new Version(1, 3, 5);
             DevConsole.Write("UPDATE", "check-start");
-            var release = await _client.GetLatestAsync(version, _stop.Token);
+            var release = await _client.GetLatestAsync(version, _preferences.IncludePrereleases, _stop.Token);
             _availableRelease = release;
             Dispatcher.UIThread.Post(() => AvailabilityChanged?.Invoke(release is not null));
             if (release is null)
             {
                 DevConsole.Write("UPDATE", "up-to-date");
                 if (manual) Dispatcher.UIThread.Post(async () =>
-                    await MessageWindow.ShowAsync(_mainWindow, "Nexora · Mise à jour", "Nexora est à jour."));
+                    await MessageWindow.ShowAsync(_mainWindow, "Nexora · Mise à jour", _preferences.IncludePrereleases
+                        ? "Aucune nouvelle version (stable ou préversion) disponible sur GitHub."
+                        : "Aucune nouvelle version stable disponible sur GitHub."));
                 return;
             }
             if (!manual && string.Equals(release.Tag, _preferences.DismissedTag, StringComparison.OrdinalIgnoreCase))
@@ -85,13 +122,13 @@ internal sealed class UpdateCoordinator : IDisposable
             DevConsole.Write("UPDATE", "update-detected");
             // A detected update changes the title-bar button; show the changelog on click.
             // Only explicit user opt-in enables unattended installation.
-            if (manual || _preferences.AutoInstall)
+            if (manual || (_preferences.AutoInstall && !suppressPopup))
                 Dispatcher.UIThread.Post(() => _ = ShowReleaseAsync(release));
         }
         catch (OperationCanceledException) when (_stop.IsCancellationRequested) { }
         catch (Exception ex)
         {
-            DevConsole.Write("WARN", "update-check-failed", ex.GetType().Name);
+            DevConsole.Write("WARN", "update-check-failed", $"{ex.GetType().Name}; HRESULT=0x{ex.HResult:X8}");
             if (manual)
                 Dispatcher.UIThread.Post(async () => await MessageWindow.ShowAsync(_mainWindow,
                     "Nexora · Mise à jour", "Vérification impossible : " + ex.Message));

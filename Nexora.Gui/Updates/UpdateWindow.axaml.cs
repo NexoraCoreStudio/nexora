@@ -17,10 +17,12 @@ public partial class UpdateWindow : Window
         _install = install;
         _saveAuto = saveAuto;
         _dismiss = dismiss;
-        VersionLabel.Text = "Nexora " + release.Version;
-        ReleaseNotes.Text = string.IsNullOrWhiteSpace(release.Notes)
+        VersionLabel.Text = "Nexora " + release.Version + (release.IsPrerelease ? " · PRÉVERSION" : "");
+        string notes = string.IsNullOrWhiteSpace(release.Notes)
             ? "La nouvelle version est prête à être installée."
             : release.Notes.Length > 1800 ? release.Notes[..1800] + "…" : release.Notes;
+        ReleaseNotes.Text = (release.IsPrerelease
+            ? "ATTENTION : version de test GitHub, potentiellement instable.\n\n" : "") + notes;
         AutomaticCheck.IsChecked = automatic;
         InstallButton.IsEnabled = canInstall;
         if (!canInstall)

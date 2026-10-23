@@ -12,6 +12,7 @@ using Nexora.Gui.Services;
 using Nexora.Gui.Security;
 using Nexora.Gui.Updates;
 using Nexora.Gui.DevTools;
+using Nexora.Gui.Settings;
 
 namespace Nexora.Gui;
 
@@ -29,6 +30,9 @@ public partial class App : Application
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             DevConsole.Start();
+#if NEXORA_DEV
+            DevCtapLogTarget.Install();
+#endif
             DevConsole.Write("BOOT", "application-start");
             _services = BuildServiceProvider();
             var mainWindow = _services.GetRequiredService<MainWindow>();
@@ -44,7 +48,7 @@ public partial class App : Application
                 }
                 catch { return true; }
             });
-            NexoraTitleBar.Attach(mainWindow, _updater);
+            NexoraTitleBar.Attach(mainWindow, _updater, manager);
             SetupTrayIcon(mainWindow, desktop);
             mainWindow.Opened += (_, _) => _updater.Start();
             desktop.Exit += (_, _) =>
@@ -92,6 +96,15 @@ public partial class App : Application
             if (_updater != null) await _updater.CheckNowAsync();
         });
 
+        var settingsItem = new NativeMenuItem("Paramètres...");
+        settingsItem.Click += (_, _) => Dispatcher.UIThread.Post(async () =>
+        {
+            mainWindow.OpenFromTray();
+            if (_updater is not null && _services is not null)
+                await SettingsWindow.ShowAsync(mainWindow, _updater,
+                    _services.GetRequiredService<IStickManager>());
+        });
+
         var lockItem = new NativeMenuItem("Verrouiller Nexora");
         lockItem.Click += (_, _) => Dispatcher.UIThread.Post(async () => await RunTrayActionAsync(mainWindow, mainWindow.LockFromTrayAsync));
 
@@ -107,7 +120,7 @@ public partial class App : Application
             Items =
             {
                 showItem, manageItem, addItem, refreshItem, historyItem,
-                updateItem, lockItem, exitItem
+                updateItem, settingsItem, lockItem, exitItem
             }
         };
 

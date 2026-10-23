@@ -4,13 +4,15 @@ using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Nexora.Gui.Updates;
+using Nexora.Gui.Settings;
+using Nexora.Gui.Services;
 
 namespace Nexora.Gui.DevTools;
 
 /// <summary>A compact custom window title bar with native-like window controls and an update action.</summary>
 internal static class NexoraTitleBar
 {
-    public static void Attach(MainWindow window, UpdateCoordinator updater)
+    public static void Attach(MainWindow window, UpdateCoordinator updater, IStickManager sticks)
     {
         if (window.Content is not Control original) return;
         // Our own decoration permits the Update button beside minimize / maximize / close.
@@ -18,7 +20,7 @@ internal static class NexoraTitleBar
         var bar = new Grid
         {
             Height = 43,
-            ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto,Auto"),
+            ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto,Auto,Auto"),
             Background = Brush.Parse("#111B30")
         };
         var drag = new Border { Background = Brushes.Transparent, Padding = new Thickness(16, 10) };
@@ -44,15 +46,18 @@ internal static class NexoraTitleBar
             update.Content = available ? "⬇  UPDATE" : "↻  Vérifier";
             update.Background = Brush.Parse(available ? "#136C61" : "#23384F");
         };
+        var settings = MakeButton("⚙  Paramètres", "#293550", 117);
+        settings.Click += async (_, _) => await SettingsWindow.ShowAsync(window, updater, sticks);
+        Grid.SetColumn(settings, 2); bar.Children.Add(settings);
         var minimize = MakeButton("—", "#17263B", 40);
         minimize.Click += (_, _) => window.WindowState = WindowState.Minimized;
-        Grid.SetColumn(minimize, 2); bar.Children.Add(minimize);
+        Grid.SetColumn(minimize, 3); bar.Children.Add(minimize);
         var maximize = MakeButton("□", "#17263B", 40);
         maximize.Click += (_, _) => ToggleMaximize(window);
-        Grid.SetColumn(maximize, 3); bar.Children.Add(maximize);
+        Grid.SetColumn(maximize, 4); bar.Children.Add(maximize);
         var close = MakeButton("✕", "#66252F", 43);
         close.Click += (_, _) => window.Close(); // Existing close handler locks the vault.
-        Grid.SetColumn(close, 4); bar.Children.Add(close);
+        Grid.SetColumn(close, 5); bar.Children.Add(close);
         var layout = new Grid { RowDefinitions = new RowDefinitions("Auto,*") };
         // Detach first: Avalonia does not permit a control to have two visual parents.
         window.Content = null;
