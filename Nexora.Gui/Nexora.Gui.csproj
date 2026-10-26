@@ -17,6 +17,10 @@
   <PropertyGroup Condition="'$(NexoraDev)' == 'true'">
     <DefineConstants>$(DefineConstants);NEXORA_DEV</DefineConstants>
   </PropertyGroup>
+  <!-- Fortress migration is disabled by default in production until reviewed and tested. -->
+  <PropertyGroup Condition="'$(NexoraFortressPreview)' == 'true'">
+    <DefineConstants>$(DefineConstants);NEXORA_FORTRESS_PREVIEW</DefineConstants>
+  </PropertyGroup>
   <!-- The full diagnostic implementation lives in the separate, private nexora-dev folder. -->
   <ItemGroup Condition="'$(NexoraDev)' == 'true'">
     <Compile Include="..\..\nexora-dev\Nexora.Dev\DevCtapLogTarget.cs" Link="DevTools\DevCtapLogTarget.cs" />
@@ -26,7 +30,6 @@
            Text="Extension Nexora DEV privée manquante : nexora-dev/Nexora.Dev/DevCtapLogTarget.cs" />
   </Target>
   <ItemGroup>
-    <!-- The PIN state lives in encrypted Nexora.vault, not in LocalPinGuard. -->
     <Compile Remove="Security\LocalPinGuard.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -37,6 +37,28 @@ public partial class App : Application
             _services = BuildServiceProvider();
             var mainWindow = _services.GetRequiredService<MainWindow>();
             desktop.MainWindow = mainWindow;
+#if NEXORA_DEV
+            // Production intentionally minimizes to tray on X. DEV must fully exit instead.
+            // The MainWindow's existing Closing handler first disconnects USB/IP, locks the
+            // vault and then hides. Only AFTER Hide do we stop the desktop lifetime,
+            // avoiding concurrent disconnection and leaving no hidden DEV process.
+            bool closeRequested = false;
+            mainWindow.Closing += (_, _) =>
+            {
+                closeRequested = true;
+                // The original closing handler can finish synchronously when no USB key
+                // is attached, so also check visibility after all Closing handlers return.
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (!mainWindow.IsVisible) desktop.Shutdown();
+                });
+            };
+            mainWindow.PropertyChanged += (_, change) =>
+            {
+                if (closeRequested && change.Property.Name == "IsVisible" && !mainWindow.IsVisible)
+                    Dispatcher.UIThread.Post(() => desktop.Shutdown());
+            };
+#endif
             var manager = _services.GetRequiredService<IStickManager>();
             _updater = new UpdateCoordinator(mainWindow, desktop, () =>
             {

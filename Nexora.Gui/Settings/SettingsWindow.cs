@@ -23,6 +23,11 @@ namespace Nexora.Gui.Settings;
 internal sealed class SettingsWindow : Window
 {
     private const string UninstallRegistryKey = @"Software\Microsoft\Windows\CurrentVersion\Uninstall\Nexora";
+#if NEXORA_FORTRESS_PREVIEW
+    private const bool FortressPreviewEnabled = true;
+#else
+    private const bool FortressPreviewEnabled = false;
+#endif
     private readonly MainWindow _main;
     private readonly UpdateCoordinator _updates;
     private readonly IStickManager _sticks;
@@ -36,6 +41,8 @@ internal sealed class SettingsWindow : Window
     private readonly TextBlock _status;
     private readonly Button _save;
     private readonly Button _resetVault;
+    private readonly Button _activateFortress;
+    private readonly TextBox _fortressPin;
     private bool _busy;
 
     public static Task ShowAsync(MainWindow main, UpdateCoordinator updates, IStickManager sticks) =>
@@ -132,6 +139,35 @@ internal sealed class SettingsWindow : Window
         };
         stack.Children.Add(Buttons(exportVault, importVault));
         stack.Children.Add(new Border { Height = 1, Background = Brush.Parse("#2A3B55"), Margin = new Thickness(0, 7) });
+        stack.Children.Add(Heading("NEXORA CRYPT FORTRESS · APERÇU V2"));
+        stack.Children.Add(new TextBlock
+        {
+            Text = "Migration volontaire et expérimentale du coffre : chaque élément obtient sa propre clé AES-256-GCM, " +
+                   "protégée par une clé de chiffrement distincte (HKDF-SHA-256). Le manifeste reste chiffré. " +
+                   "Une copie intégrale du coffre v1 est conservée avant remplacement. " +
+                   "Cette première étape n'implémente PAS encore le TPM, Argon2id, ni un service isolé.",
+            Foreground = Brush.Parse("#B8C7DD"), TextWrapping = TextWrapping.Wrap, FontSize = 12
+        });
+        _fortressPin = new TextBox
+        {
+            Watermark = "Confirmer le PIN Nexora actuel (4 chiffres)", MaxLength = 4, PasswordChar = '●',
+            IsVisible = FortressPreviewEnabled
+        };
+        _activateFortress = ActionButton("Activer Fortress v2 (migration expérimentale)", "#604692");
+        _activateFortress.IsEnabled = FortressPreviewEnabled && _vault.IsConfigured && _vault.IsUnlocked &&
+                                     VaultStore.ReadVaultFormatVersion(VaultStore.DefaultVaultPath) == 1;
+        if (!FortressPreviewEnabled)
+            _activateFortress.Content = "Fortress v2 — apercu uniquement (build de test requis)";
+        _activateFortress.Click += MigrateFortress_Click;
+        stack.Children.Add(_fortressPin);
+        stack.Children.Add(_activateFortress);
+        stack.Children.Add(new TextBlock
+        {
+            Text = "N'activez pas cette migration sur votre coffre principal avant validation des tests Windows. " +
+                   "Conservez aussi votre code de récupération de 256 bits et une sauvegarde .nxbackup indépendante.",
+            Foreground = Brush.Parse("#F1C3AE"), TextWrapping = TextWrapping.Wrap, FontSize = 12
+        });
+        stack.Children.Add(new Border { Height = 1, Background = Brush.Parse("#2A3B55"), Margin = new Thickness(0, 7) });
         stack.Children.Add(Heading("RÉINITIALISATION"));
         stack.Children.Add(new TextBlock
         {
@@ -216,6 +252,60 @@ internal sealed class SettingsWindow : Window
             _status.Text = "Préférences restaurées.";
         }
         catch (Exception ex) { _status.Text = "Échec : " + ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private async void MigrateFortress_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (_busy || !FortressPreviewEnabled) return;
+        string pin = _fortressPin.Text ?? string.Empty;
+        _fortressPin.Text = string.Empty;
+        if (!_vault.IsUnlocked || !_vault.IsConfigured)
+        {
+            _status.Text = "Deverrouillez Nexora Vault avant de migrer.";
+            return;
+        }
+        if (!_vault.VerifyApproval(pin, out var error))
+        {
+            _status.Text = error;
+            return;
+        }
+        if (!await ConfirmWindow.ShowAsync(this, "Nexora Crypt Fortress v2 — aperçu",
+            "ATTENTION : migration expérimentale et NON AUDITEE. " +
+            "Une copie complète du coffre v1 sera conservée, puis les éléments seront rechiffrés avec des clés individuelles. " +
+            "Déconnectez vos clés USB virtuelles. " +
+            "Cette opération ne peut pas être annulée sans restauration manuelle de la copie v1. " +
+            "Avez-vous sauvegardé votre code de récupération et une archive .nxbackup ?",
+            "Migrer le coffre (aperçu)")) return;
+
+        _busy = true;
+        _activateFortress.IsEnabled = false;
+        try
+        {
+            await _sticks.DisconnectAllAsync();
+            if (_sticks.GetConfiguredSticks().Any(key => _sticks.IsConnected(key.Name)))
+                throw new IOException("Une clé FIDO2 est encore connectée. Migration annulée.");
+            FortressMigrationResult result;
+            string backups = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Nexora", "Backups", "Fortress");
+            lock (_vault.SyncRoot)
+                result = VaultFortressMigration.Migrate(_vault.Session, backups);
+            _status.Text = "Fortress v2 active : " + result.MigratedItems + " elements conserves.";
+            await MessageWindow.ShowAsync(this, "Migration Fortress v2 terminee",
+                "Les cles FIDO2 ont ete migrees. Copie complete du coffre v1 :\n" + result.PreservedV1Vault +
+                "\n\nNexora va maintenant fermer pour recreer proprement ses sessions FIDO2. " +
+                "Conservez la sauvegarde v1 et votre code de recuperation.");
+            Close();
+            await _main.ForceCloseAsync();
+            (Avalonia.Application.Current?.ApplicationLifetime as
+                Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime)?.Shutdown();
+        }
+        catch (Exception ex)
+        {
+            _status.Text = "Migration interrompue : " + ex.Message;
+            _activateFortress.IsEnabled = FortressPreviewEnabled && _vault.IsConfigured && _vault.IsUnlocked &&
+                                         VaultStore.ReadVaultFormatVersion(VaultStore.DefaultVaultPath) == 1;
+        }
         finally { _busy = false; }
     }
 
