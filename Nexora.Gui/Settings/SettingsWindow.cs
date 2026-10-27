@@ -115,6 +115,20 @@ internal sealed class SettingsWindow : Window
         });
         var updatesActions = Buttons(_save, check, resetPreferences);
         stack.Children.Add(updatesActions);
+        stack.Children.Add(Heading("VÉRIFICATION DE L'INSTALLATION"));
+        stack.Children.Add(new TextBlock
+        {
+            Text = "Vérifiez la version installée et les empreintes SHA-256 des fichiers de l'application " +
+                   "par rapport au manifeste officiel publié sur GitHub. Aucune donnée du coffre Nexora n'est consultée.",
+            Foreground = Brush.Parse("#B8C7DD"), TextWrapping = TextWrapping.Wrap, FontSize = 12
+        });
+        var integrityCheck = ActionButton("Vérifier l'intégrité de Nexora", "#1F6873");
+        integrityCheck.Click += async (_, _) =>
+        {
+            if (_busy) return;
+            await InstallationIntegrityWindow.ShowAsync(this, _includePrereleases.IsChecked == true);
+        };
+        stack.Children.Add(integrityCheck);
         stack.Children.Add(new Border { Height = 1, Background = Brush.Parse("#2A3B55"), Margin = new Thickness(0, 7) });
         stack.Children.Add(Heading("NEXORA VAULT · SAUVEGARDE ET RESTAURATION"));
         stack.Children.Add(new TextBlock
