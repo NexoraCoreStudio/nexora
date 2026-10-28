@@ -3,8 +3,8 @@
         x:Class="Nexora.Gui.Updates.UpdateWindow"
         Icon="avares://Nexora/Assets/Nexora_Icon.png"
         Title="Nexora · Mise à jour"
-        Width="760" Height="680"
-        MinWidth="640" MinHeight="580"
+        Width="880" Height="760"
+        MinWidth="760" MinHeight="700"
         CanResize="True"
         WindowStartupLocation="CenterOwner"
         Background="#0B1220" RequestedThemeVariant="Dark">
@@ -19,7 +19,7 @@
                            FontSize="11" FontWeight="Bold" Foreground="#74E4ED"/>
                 <TextBlock x:Name="VersionLabel" Text="Nexora"
                            FontSize="27" FontWeight="Bold" Foreground="#F4E9FF"/>
-                <TextBlock Text="Mise à jour récupérée depuis GitHub Releases"
+                <TextBlock Text="Mise à jour téléchargée depuis GitHub Releases"
                            FontSize="12" Foreground="#9FB2CC"/>
             </StackPanel>
             <Border Grid.Column="1" Background="#1A3545" BorderBrush="#2D6371"
@@ -55,7 +55,7 @@
         <!-- Notes: the only flexible region, with internal scrolling -->
         <Border Grid.Row="2" Background="#17253C" BorderBrush="#283A54"
                 BorderThickness="1" CornerRadius="13" Padding="18,15" Margin="0,0,0,13"
-                MinHeight="120">
+                MinHeight="155">
             <Grid RowDefinitions="Auto,*">
                 <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,10">
                     <TextBlock Text="Notes de version" FontSize="15" FontWeight="SemiBold"
