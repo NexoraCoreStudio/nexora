@@ -111,7 +111,7 @@ public partial class AddStickWindow : Window
         Close();
     }
 
-    private async void Create_Click(object? sender, RoutedEventArgs e)
+    private void Create_Click(object? sender, RoutedEventArgs e)
     {
         if (_existing == null && !StickConfigStore.IsValidStickName(NameBox.Text))
         {
