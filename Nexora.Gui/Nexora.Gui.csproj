@@ -6,7 +6,7 @@
     <AssemblyTitle>Nexora</AssemblyTitle>
     <TargetFramework>net8.0-windows</TargetFramework>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
-    <Version>1.5.5</Version>
+    <Version>1.6.0</Version>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
