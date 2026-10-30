@@ -2,120 +2,87 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Nexora.Gui.Updates.UpdateWindow"
         Icon="avares://Nexora/Assets/Nexora_Icon.png"
-        Title="Nexora · Mise à jour"
-        Width="880" Height="760"
-        MinWidth="760" MinHeight="700"
-        CanResize="True"
-        WindowStartupLocation="CenterOwner"
-        Background="#0B1220" RequestedThemeVariant="Dark">
-
-    <!-- Each functional area has its own row. Only the changelog grows or scrolls. -->
-    <Grid Margin="26,23,26,22" RowDefinitions="Auto,Auto,*,Auto,Auto,Auto">
-
-        <!-- Header / release channel -->
-        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,15">
-            <StackPanel Spacing="5">
-                <TextBlock Text="NOUVELLE VERSION DISPONIBLE"
-                           FontSize="11" FontWeight="Bold" Foreground="#74E4ED"/>
-                <TextBlock x:Name="VersionLabel" Text="Nexora"
-                           FontSize="27" FontWeight="Bold" Foreground="#F4E9FF"/>
-                <TextBlock Text="Mise à jour téléchargée depuis GitHub Releases"
-                           FontSize="12" Foreground="#9FB2CC"/>
+        Title="Nexora · Centre de mise à jour"
+        Width="800" Height="730" MinWidth="680" MinHeight="610"
+        CanResize="True" WindowStartupLocation="CenterOwner"
+        Background="#090D18" RequestedThemeVariant="Dark">
+    <!-- Critical UX: Release notes take the only star-sized row. Controls remain visible. -->
+    <Grid Margin="24,19,24,22" RowDefinitions="Auto,Auto,*,Auto,Auto,Auto">
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,18">
+            <Border Width="55" Height="55" Background="#251E42" BorderBrush="#594381"
+                    BorderThickness="1" CornerRadius="13" Padding="8" VerticalAlignment="Center">
+                <Image Source="avares://Nexora/Assets/Nexora_Icon.png" Stretch="Uniform"/>
+            </Border>
+            <StackPanel Grid.Column="1" Spacing="5" Margin="15,0,0,0" VerticalAlignment="Center">
+                <TextBlock Text="NEXORA  /  RELEASE CENTER" FontSize="10" FontWeight="Bold" Foreground="#B69DFB"/>
+                <TextBlock x:Name="VersionLabel" Text="Nexora" FontSize="25" FontWeight="Bold" Foreground="#F6F5FF"/>
+                <TextBlock Text="Nouvelle version disponible sur GitHub Releases" FontSize="11" Foreground="#9EB1CD"/>
             </StackPanel>
-            <Border Grid.Column="1" Background="#1A3545" BorderBrush="#2D6371"
-                    BorderThickness="1" CornerRadius="13" Padding="13,7"
-                    VerticalAlignment="Top" Margin="14,1,0,0">
-                <TextBlock x:Name="ReleaseChannelLabel" Text="STABLE"
-                           FontSize="11" FontWeight="SemiBold" Foreground="#83E5DE"/>
+            <Border Grid.Column="2" Background="#173532" BorderBrush="#306762" BorderThickness="1"
+                    CornerRadius="15" Padding="12,7" VerticalAlignment="Center" Margin="9,0,0,0">
+                <TextBlock x:Name="ReleaseChannelLabel" Text="STABLE" FontSize="10"
+                           FontWeight="Bold" Foreground="#8DE8DA"/>
             </Border>
         </Grid>
-
-        <!-- Versions + downloaded package details -->
-        <Border Grid.Row="1" Background="#122039" BorderBrush="#263954"
-                BorderThickness="1" CornerRadius="12" Padding="17,13" Margin="0,0,0,13">
+        <Border Grid.Row="1" Background="#131E31" BorderBrush="#2D3B56" BorderThickness="1"
+                CornerRadius="13" Padding="18,15" Margin="0,0,0,15">
             <Grid ColumnDefinitions="*,*,*">
-                <StackPanel Grid.Column="0" Spacing="4">
-                    <TextBlock Text="VERSION INSTALLÉE" FontSize="10" FontWeight="Bold" Foreground="#90A7C4"/>
-                    <TextBlock x:Name="InstalledVersionLabel" Text="—" FontSize="15"
-                               FontWeight="SemiBold" Foreground="#DFEAFA"/>
+                <StackPanel Grid.Column="0" Spacing="5">
+                    <TextBlock Text="INSTALLÉE" FontSize="10" FontWeight="Bold" Foreground="#8DA2C4"/>
+                    <TextBlock x:Name="InstalledVersionLabel" Text="—" FontSize="19" FontWeight="Bold" Foreground="#E7EFFF"/>
                 </StackPanel>
-                <StackPanel Grid.Column="1" Spacing="4" Margin="12,0,0,0">
-                    <TextBlock Text="VERSION DISPONIBLE" FontSize="10" FontWeight="Bold" Foreground="#90A7C4"/>
-                    <TextBlock x:Name="AvailableVersionLabel" Text="—" FontSize="15"
-                               FontWeight="SemiBold" Foreground="#BDA6FF"/>
+                <StackPanel Grid.Column="1" Spacing="5" Margin="13,0,0,0">
+                    <TextBlock Text="DISPONIBLE" FontSize="10" FontWeight="Bold" Foreground="#8DA2C4"/>
+                    <TextBlock x:Name="AvailableVersionLabel" Text="—" FontSize="19" FontWeight="Bold" Foreground="#C4ADFF"/>
                 </StackPanel>
-                <StackPanel Grid.Column="2" Spacing="4" Margin="12,0,0,0">
-                    <TextBlock Text="TAILLE DU PACKAGE" FontSize="10" FontWeight="Bold" Foreground="#90A7C4"/>
-                    <TextBlock x:Name="PackageSizeLabel" Text="—" FontSize="15"
-                               FontWeight="SemiBold" Foreground="#DFEAFA"/>
+                <StackPanel Grid.Column="2" Spacing="5" Margin="13,0,0,0">
+                    <TextBlock Text="TAILLE" FontSize="10" FontWeight="Bold" Foreground="#8DA2C4"/>
+                    <TextBlock x:Name="PackageSizeLabel" Text="—" FontSize="19" FontWeight="Bold" Foreground="#E7EFFF"/>
                 </StackPanel>
             </Grid>
         </Border>
-
-        <!-- Notes: the only flexible region, with internal scrolling -->
-        <Border Grid.Row="2" Background="#17253C" BorderBrush="#283A54"
-                BorderThickness="1" CornerRadius="13" Padding="18,15" Margin="0,0,0,13"
-                MinHeight="155">
+        <Border Grid.Row="2" Background="#111A2D" BorderBrush="#29364F" BorderThickness="1"
+                CornerRadius="13" Padding="16,14" Margin="0,0,0,14" MinHeight="100">
             <Grid RowDefinitions="Auto,*">
-                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,10">
-                    <TextBlock Text="Notes de version" FontSize="15" FontWeight="SemiBold"
-                               Foreground="#E3C8FF" VerticalAlignment="Center"/>
-                    <TextBlock Grid.Column="1" Text="Défilement disponible"
-                               FontSize="10" Foreground="#879AB4" VerticalAlignment="Center"/>
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+                    <TextBlock Text="Notes de version" FontSize="15" FontWeight="SemiBold" Foreground="#F2E8FF"/>
+                    <TextBlock Grid.Column="1" Text="DÉFILER ↓" FontSize="10" Foreground="#859AB9" VerticalAlignment="Center"/>
                 </Grid>
-                <ScrollViewer Grid.Row="1"
-                              HorizontalScrollBarVisibility="Disabled"
+                <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled"
                               VerticalScrollBarVisibility="Auto">
-                    <StackPanel x:Name="ReleaseNotesPanel" Spacing="7" Margin="0,0,9,0"/>
+                    <StackPanel x:Name="ReleaseNotesPanel" Spacing="8" Margin="0,0,9,0"/>
                 </ScrollViewer>
             </Grid>
         </Border>
-
-        <!-- The automatic update option cannot overlap the notes -->
-        <Border Grid.Row="3" Background="#111D30" BorderBrush="#253751"
-                BorderThickness="1" CornerRadius="12" Padding="16,11"
-                Margin="0,0,0,12">
+        <Border Grid.Row="3" Background="#161F34" BorderBrush="#2C3A55" BorderThickness="1"
+                CornerRadius="12" Padding="13,11" Margin="0,0,0,12">
             <StackPanel Spacing="4">
                 <CheckBox x:Name="AutomaticCheck"
                           Content="Installer automatiquement les prochaines mises à jour"
-                          FontSize="12" Foreground="#EDF4FF"
-                          Checked="AutomaticChanged" Unchecked="AutomaticChanged"/>
-                <TextBlock Text="Vérification selon tes paramètres. Déconnecte les clés USB virtuelles avant toute installation."
-                           FontSize="11" Foreground="#94A9C5" TextWrapping="Wrap"
-                           Margin="26,0,0,0"/>
+                          FontSize="12" Checked="AutomaticChanged" Unchecked="AutomaticChanged"/>
+                <TextBlock Text="Les clés USB/IP doivent être déconnectées avant toute installation."
+                           TextWrapping="Wrap" Foreground="#94A9C8" FontSize="11" Margin="26,0,0,0"/>
             </StackPanel>
         </Border>
-
-        <!-- Dedicated progress row, outside the changelog and action buttons -->
-        <Border Grid.Row="4" Background="#101D2F" BorderBrush="#263A55"
-                BorderThickness="1" CornerRadius="12" Padding="15,11"
-                Margin="0,0,0,12">
-            <Grid RowDefinitions="Auto,Auto">
-                <Grid ColumnDefinitions="Auto,*">
-                    <TextBlock x:Name="StageLabel" Text="EN ATTENTE"
-                               FontSize="10" FontWeight="Bold" Foreground="#7DE1E1"
-                               VerticalAlignment="Top" Margin="0,2,0,0"/>
-                    <TextBlock x:Name="StatusLabel" Grid.Column="1"
-                               Text="Prêt à télécharger et à vérifier la mise à jour."
-                               Margin="12,0,0,0" Foreground="#C0D4EB" FontSize="12" TextWrapping="Wrap"/>
-                </Grid>
-                <ProgressBar x:Name="DownloadProgress" Grid.Row="1"
-                             Minimum="0" Maximum="100" Height="7"
-                             Margin="0,10,0,0" IsVisible="False"/>
+        <Border Grid.Row="4" Background="#14202F" BorderBrush="#30415A" BorderThickness="1"
+                CornerRadius="12" Padding="13,11" Margin="0,0,0,13">
+            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*">
+                <TextBlock x:Name="StageLabel" Grid.Row="0" Grid.Column="0" Text="EN ATTENTE"
+                           FontSize="10" FontWeight="Bold" Foreground="#74E4D6" Margin="0,2,0,0"/>
+                <TextBlock x:Name="StatusLabel" Grid.Row="0" Grid.Column="1"
+                           Text="Prêt à télécharger et vérifier la mise à jour."
+                           Foreground="#C3D2E9" FontSize="11" TextWrapping="Wrap" Margin="15,0,0,0"/>
+                <ProgressBar x:Name="DownloadProgress" Grid.Row="1" Grid.ColumnSpan="2"
+                             Minimum="0" Maximum="100" Height="6" Margin="0,11,0,0" IsVisible="False"/>
             </Grid>
         </Border>
-
-        <!-- Footer has its own reserved area and never overlays progress -->
         <Grid Grid.Row="5" ColumnDefinitions="*,Auto,Auto">
-            <Button x:Name="ChangelogButton" Grid.Column="0"
-                    Content="↗  Voir les notes sur GitHub"
-                    HorizontalAlignment="Left" VerticalAlignment="Center"
-                    FontSize="12" Padding="12,10" Click="Changelog_Click"/>
-            <Button x:Name="LaterButton" Grid.Column="1" Content="Plus tard" Margin="10,0,0,0"
-                    MinWidth="100" Click="Later_Click"/>
-            <Button x:Name="InstallButton" Grid.Column="2"
-                    Content="Installer maintenant" Classes="accent" Margin="10,0,0,0"
-                    MinWidth="165" Click="Install_Click"/>
+            <Button x:Name="ChangelogButton" Grid.Column="0" Classes="quiet"
+                    Content="↗  Notes sur GitHub" HorizontalAlignment="Left" Click="Changelog_Click"/>
+            <Button x:Name="LaterButton" Grid.Column="1" Content="Plus tard"
+                    Margin="9,0,0,0" MinWidth="105" Click="Later_Click"/>
+            <Button x:Name="InstallButton" Grid.Column="2" Classes="accent"
+                    Content="Installer maintenant" Margin="10,0,0,0" MinWidth="172" Click="Install_Click"/>
         </Grid>
     </Grid>
 </Window>

@@ -54,12 +54,12 @@ internal sealed class SettingsWindow : Window
         _updates = updates;
         _sticks = sticks;
         Title = "Nexora · Paramètres";
-        Width = 640;
-        Height = 715;
-        MinWidth = 520;
-        MinHeight = 570;
+        Width = 770;
+        Height = 800;
+        MinWidth = 640;
+        MinHeight = 600;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        Background = Brush.Parse("#0C1526");
+        Background = Brush.Parse("#090D18");
         _autoInstall = Option("Installer automatiquement les mises à jour", updates.AutoInstall);
         _includePrereleases = Option("Recevoir aussi les préversions GitHub", updates.IncludePrereleases);
         _startupCheck = Option("Vérifier les mises à jour au lancement", updates.CheckOnStartup);
@@ -68,38 +68,38 @@ internal sealed class SettingsWindow : Window
         _resetPin = new TextBox { Watermark = "Code PIN actuel (4 chiffres)", MaxLength = 4, PasswordChar = '●' };
         _status = new TextBlock
         {
-            Foreground = Brush.Parse("#98DCEB"), TextWrapping = TextWrapping.Wrap,
+            Foreground = Brush.Parse("#76E3DD"), TextWrapping = TextWrapping.Wrap,
             Text = "Les paramètres sont enregistrés uniquement sur ce PC."
         };
-        _save = ActionButton("Enregistrer", "#244D85");
+        _save = ActionButton("Enregistrer", "#534286");
         _save.Click += Save_Click;
-        var check = ActionButton("Vérifier maintenant", "#273A52");
+        var check = ActionButton("Vérifier maintenant", "#25324A");
         check.Click += async (_, _) =>
         {
             if (_busy) return;
             Close(); // Avoid opening a second modal over Settings.
             await _updates.CheckNowAsync();
         };
-        var resetPreferences = ActionButton("Restaurer les paramètres", "#324056");
+        var resetPreferences = ActionButton("Restaurer les paramètres", "#27364F");
         resetPreferences.Click += ResetPreferences_Click;
-        _resetVault = ActionButton("Réinitialiser Nexora", "#80404E");
+        _resetVault = ActionButton("Réinitialiser Nexora", "#71364B");
         _resetVault.IsEnabled = _vault.IsConfigured && _vault.IsUnlocked;
         _resetVault.Click += ResetVault_Click;
-        var uninstall = ActionButton("Désinstaller Nexora", "#7A3443");
+        var uninstall = ActionButton("Désinstaller Nexora", "#71364B");
         uninstall.Click += Uninstall_Click;
-        var close = ActionButton("Fermer", "#273A52");
+        var close = ActionButton("Fermer", "#25324A");
         close.Click += (_, _) => Close();
 
-        var stack = new StackPanel { Spacing = 13, Margin = new Thickness(24, 20) };
+        var stack = new StackPanel { Spacing = 14, Margin = new Thickness(29, 23) };
         stack.Children.Add(new TextBlock
         {
-            Text = "PARAMÈTRES", FontSize = 23, FontWeight = FontWeight.Bold,
-            Foreground = Brush.Parse("#E7EFFF")
+            Text = "Paramètres & sécurité", FontSize = 27, FontWeight = FontWeight.Bold,
+            Foreground = Brush.Parse("#F3F5FF")
         });
         stack.Children.Add(new TextBlock
         {
             Text = "Nexora " + NexoraTitleBar.DisplayVersion + " · préférences locales et maintenance",
-            Foreground = Brush.Parse("#99AFCB"), FontSize = 12
+            Foreground = Brush.Parse("#9DB0CE"), FontSize = 12
         });
         stack.Children.Add(Heading("MISES À JOUR"));
         stack.Children.Add(_startupCheck);
@@ -110,7 +110,7 @@ internal sealed class SettingsWindow : Window
         {
             Text = "Les préversions peuvent être instables. Elles viennent uniquement des Releases du dépôt public Nexora. " +
                    "Le choix n'active pas le mode console DEV privé.",
-            Foreground = Brush.Parse("#A4B6D1"), TextWrapping = TextWrapping.Wrap,
+            Foreground = Brush.Parse("#A7B8D3"), TextWrapping = TextWrapping.Wrap,
             FontSize = 12
         });
         var updatesActions = Buttons(_save, check, resetPreferences);
@@ -120,39 +120,39 @@ internal sealed class SettingsWindow : Window
         {
             Text = "Vérifiez la version installée et les empreintes SHA-256 des fichiers de l'application " +
                    "par rapport au manifeste officiel publié sur GitHub. Aucune donnée du coffre Nexora n'est consultée.",
-            Foreground = Brush.Parse("#B8C7DD"), TextWrapping = TextWrapping.Wrap, FontSize = 12
+            Foreground = Brush.Parse("#AEBEDA"), TextWrapping = TextWrapping.Wrap, FontSize = 12
         });
-        var integrityCheck = ActionButton("Vérifier l'intégrité de Nexora", "#1F6873");
+        var integrityCheck = ActionButton("Vérifier l'intégrité de Nexora", "#196B70");
         integrityCheck.Click += async (_, _) =>
         {
             if (_busy) return;
             await InstallationIntegrityWindow.ShowAsync(this, _includePrereleases.IsChecked == true);
         };
         stack.Children.Add(integrityCheck);
-        stack.Children.Add(new Border { Height = 1, Background = Brush.Parse("#2A3B55"), Margin = new Thickness(0, 7) });
+        stack.Children.Add(new Border { Height = 1, Background = Brush.Parse("#293851"), Margin = new Thickness(0, 7) });
         stack.Children.Add(Heading("NEXORA VAULT · SAUVEGARDE ET RESTAURATION"));
         stack.Children.Add(new TextBlock
         {
             Text = "Exportez votre coffre dans un fichier .nxbackup chiffré par un mot de passe indépendant. " +
                    "Pour restaurer sur un autre compte Windows, conservez également le code de récupération d'origine " +
                    "et votre PIN. La restauration préserve l'ancien coffre avant le remplacement.",
-            Foreground = Brush.Parse("#B8C7DD"), TextWrapping = TextWrapping.Wrap, FontSize = 12
+            Foreground = Brush.Parse("#AEBEDA"), TextWrapping = TextWrapping.Wrap, FontSize = 12
         });
-        var exportVault = ActionButton("Sauvegarder le coffre", "#63459D");
+        var exportVault = ActionButton("Sauvegarder le coffre", "#644AA9");
         exportVault.IsEnabled = _vault.IsConfigured && _vault.IsUnlocked;
         exportVault.Click += async (_, _) =>
         {
             if (_busy) return;
             await VaultBackupWindow.ShowAsync(this, _main, _sticks, restore: false);
         };
-        var importVault = ActionButton("Restaurer une sauvegarde", "#315579");
+        var importVault = ActionButton("Restaurer une sauvegarde", "#2B5977");
         importVault.Click += async (_, _) =>
         {
             if (_busy) return;
             await VaultBackupWindow.ShowAsync(this, _main, _sticks, restore: true);
         };
         stack.Children.Add(Buttons(exportVault, importVault));
-        stack.Children.Add(new Border { Height = 1, Background = Brush.Parse("#2A3B55"), Margin = new Thickness(0, 7) });
+        stack.Children.Add(new Border { Height = 1, Background = Brush.Parse("#293851"), Margin = new Thickness(0, 7) });
         stack.Children.Add(Heading("NEXORA CRYPT FORTRESS · APERÇU V2"));
         stack.Children.Add(new TextBlock
         {
@@ -160,14 +160,14 @@ internal sealed class SettingsWindow : Window
                    "protégée par une clé de chiffrement distincte (HKDF-SHA-256). Le manifeste reste chiffré. " +
                    "Une copie intégrale du coffre v1 est conservée avant remplacement. " +
                    "Cette première étape n'implémente PAS encore le TPM, Argon2id, ni un service isolé.",
-            Foreground = Brush.Parse("#B8C7DD"), TextWrapping = TextWrapping.Wrap, FontSize = 12
+            Foreground = Brush.Parse("#AEBEDA"), TextWrapping = TextWrapping.Wrap, FontSize = 12
         });
         _fortressPin = new TextBox
         {
             Watermark = "Confirmer le PIN Nexora actuel (4 chiffres)", MaxLength = 4, PasswordChar = '●',
             IsVisible = FortressPreviewEnabled
         };
-        _activateFortress = ActionButton("Activer Fortress v2 (migration expérimentale)", "#604692");
+        _activateFortress = ActionButton("Activer Fortress v2 (migration expérimentale)", "#5F478F");
         _activateFortress.IsEnabled = FortressPreviewEnabled && _vault.IsConfigured && _vault.IsUnlocked &&
                                      VaultStore.ReadVaultFormatVersion(VaultStore.DefaultVaultPath) == 1;
         if (!FortressPreviewEnabled)
@@ -179,43 +179,90 @@ internal sealed class SettingsWindow : Window
         {
             Text = "N'activez pas cette migration sur votre coffre principal avant validation des tests Windows. " +
                    "Conservez aussi votre code de récupération de 256 bits et une sauvegarde .nxbackup indépendante.",
-            Foreground = Brush.Parse("#F1C3AE"), TextWrapping = TextWrapping.Wrap, FontSize = 12
+            Foreground = Brush.Parse("#FFD09F"), TextWrapping = TextWrapping.Wrap, FontSize = 12
         });
-        stack.Children.Add(new Border { Height = 1, Background = Brush.Parse("#2A3B55"), Margin = new Thickness(0, 7) });
+        stack.Children.Add(new Border { Height = 1, Background = Brush.Parse("#293851"), Margin = new Thickness(0, 7) });
         stack.Children.Add(Heading("RÉINITIALISATION"));
         stack.Children.Add(new TextBlock
         {
             Text = "Les préférences peuvent être restaurées ci-dessus. La réinitialisation complète déconnecte les clés et " +
                    "archive le coffre chiffré dans AppData\\Local\\Nexora\\Backups, sans détruire la sauvegarde.",
-            Foreground = Brush.Parse("#B8C7DD"), TextWrapping = TextWrapping.Wrap, FontSize = 12
+            Foreground = Brush.Parse("#AEBEDA"), TextWrapping = TextWrapping.Wrap, FontSize = 12
         });
         stack.Children.Add(_resetWord);
         stack.Children.Add(_resetPin);
         stack.Children.Add(_resetVault);
-        stack.Children.Add(new Border { Height = 1, Background = Brush.Parse("#2A3B55"), Margin = new Thickness(0, 7) });
+        stack.Children.Add(new Border { Height = 1, Background = Brush.Parse("#293851"), Margin = new Thickness(0, 7) });
         stack.Children.Add(Heading("DÉSINSTALLATION"));
         stack.Children.Add(new TextBlock
         {
             Text = "Ouvre le programme de désinstallation officiel de Windows. " +
                    "Les clés FIDO2 et le coffre sont conservés, conformément au comportement de l'installateur.",
-            Foreground = Brush.Parse("#B8C7DD"), TextWrapping = TextWrapping.Wrap, FontSize = 12
+            Foreground = Brush.Parse("#AEBEDA"), TextWrapping = TextWrapping.Wrap, FontSize = 12
         });
         stack.Children.Add(uninstall);
         stack.Children.Add(_status);
         stack.Children.Add(close);
-        Content = new ScrollViewer { Content = stack, VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto };
+        Content = BuildSectionedLayout(stack);
     }
+
+    // Group every existing settings control into a real, independently styled card.
+    // This is visual-only: click handlers, security validations and controls stay intact.
+    private static Control BuildSectionedLayout(StackPanel root)
+    {
+        var original = root.Children.ToArray();
+        root.Children.Clear();
+        StackPanel? activeSection = null;
+        var index = 0;
+        foreach (var control in original)
+        {
+            if (index++ < 2)
+            {
+                root.Children.Add(control);
+                continue;
+            }
+            if (control is Border rule && rule.Height == 1)
+                continue; // each group has its own full border
+            if (control is TextBlock heading && IsSectionHeading(heading.Text))
+            {
+                activeSection = new StackPanel { Spacing = 12 };
+                var section = new Border
+                {
+                    Padding = new Thickness(21, 19),
+                    CornerRadius = new CornerRadius(15),
+                    BorderThickness = new Thickness(1),
+                    BorderBrush = Brush.Parse("#2B3955"),
+                    Background = Brush.Parse("#111B2E"),
+                    Child = activeSection
+                };
+                root.Children.Add(section);
+            }
+            (activeSection ?? root).Children.Add(control);
+        }
+        return new ScrollViewer
+        {
+            Content = root,
+            VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto,
+            HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled
+        };
+    }
+
+    private static bool IsSectionHeading(string? text) => text is
+        "MISES À JOUR" or "VÉRIFICATION DE L'INSTALLATION" or
+        "NEXORA VAULT · SAUVEGARDE ET RESTAURATION" or
+        "NEXORA CRYPT FORTRESS · APERÇU V2" or
+        "RÉINITIALISATION" or "DÉSINSTALLATION";
 
     private static CheckBox Option(string content, bool checkedValue) => new()
     {
         Content = content, IsChecked = checkedValue,
-        Foreground = Brush.Parse("#DFE9F8"), FontSize = 13
+        Foreground = Brush.Parse("#D8E5F8"), FontSize = 13
     };
 
     private static TextBlock Heading(string text) => new()
     {
-        Text = text, FontSize = 12, FontWeight = FontWeight.Bold,
-        Foreground = Brush.Parse("#C59DFF"), Margin = new Thickness(0, 6, 0, 0)
+        Text = text, FontSize = 13, FontWeight = FontWeight.Bold,
+        Foreground = Brush.Parse("#C2A9FF"), Margin = new Thickness(0, 6, 0, 0)
     };
 
     private static Button ActionButton(string content, string background) => new()

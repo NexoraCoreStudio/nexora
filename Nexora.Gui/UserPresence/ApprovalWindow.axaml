@@ -1,41 +1,54 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Nexora.Gui.UserPresence.ApprovalWindow"
-        Title="Nexora · Autorisation"
+        Title="Nexora · Autorisation FIDO2"
         Icon="avares://Nexora/Assets/Nexora_Icon.png"
-        Width="470" Height="460" CanResize="False"
-        WindowStartupLocation="CenterScreen" Topmost="True"
-        ShowInTaskbar="True" Background="#101A2A"
-        RequestedThemeVariant="Dark">
-    <Border Background="#101A2A" Padding="25" CornerRadius="16">
-        <Grid RowDefinitions="Auto,*,Auto">
-            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="13">
-                <Image Source="avares://Nexora/Assets/Nexora_Icon.png"
-                       Width="69" Height="69" Stretch="Uniform" />
-                <StackPanel VerticalAlignment="Center" Spacing="5">
-                    <TextBlock Text="NEXORA  /  VÉRIFICATION" FontSize="12" FontWeight="Bold" Foreground="#C39AFF" />
-                    <TextBlock Text="Valider la demande" FontSize="22" FontWeight="Bold" Foreground="White" />
-                    <TextBlock x:Name="DeviceText" FontSize="12" Foreground="#9FB3D0" />
+        Width="510" Height="520" MinWidth="465" MinHeight="495"
+        CanResize="True" WindowStartupLocation="CenterScreen" Topmost="True"
+        ShowInTaskbar="True" Background="#0A1020" RequestedThemeVariant="Dark">
+    <Grid RowDefinitions="Auto,*,Auto" Margin="27,24">
+        <StackPanel Grid.Row="0" Spacing="10">
+            <Grid ColumnDefinitions="Auto,*">
+                <Border Background="#2A214A" BorderBrush="#514078" BorderThickness="1" CornerRadius="12"
+                        Width="53" Height="53" Padding="8">
+                    <Image Source="avares://Nexora/Assets/Nexora_Icon.png" Stretch="Uniform"/>
+                </Border>
+                <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center" Margin="13,0,0,0">
+                    <TextBlock Text="NEXORA  /  AUTORISATION FIDO2" FontSize="10" FontWeight="Bold" Foreground="#AC91F6"/>
+                    <TextBlock Text="Confirmer cette demande" FontSize="21" FontWeight="Bold" Foreground="#F4F5FF"/>
                 </StackPanel>
-            </StackPanel>
-            <StackPanel Grid.Row="1" Margin="0,24,0,14" Spacing="12">
-                <TextBlock x:Name="OperationText" FontSize="15" FontWeight="SemiBold" Foreground="#EEF6FF" TextWrapping="Wrap" />
-                <Border Background="#1C3047" CornerRadius="11" Padding="14,12">
-                    <StackPanel Spacing="5">
-                        <TextBlock Text="SERVICE DEMANDEUR" FontSize="10" Foreground="#89A0BD" />
-                        <TextBlock x:Name="RpText" FontSize="17" FontWeight="SemiBold" Foreground="White" TextWrapping="Wrap"/>
+            </Grid>
+            <Border Background="#172337" BorderBrush="#2A3A50" BorderThickness="1" CornerRadius="10" Padding="12,8">
+                <TextBlock x:Name="DeviceText" FontSize="12" Foreground="#ACC0DA" TextWrapping="Wrap"/>
+            </Border>
+        </StackPanel>
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,18,0,13">
+            <StackPanel Spacing="13">
+                <TextBlock x:Name="OperationText" FontWeight="SemiBold" Foreground="#E8F0FF"
+                           FontSize="15" TextWrapping="Wrap"/>
+                <Border Background="#1C2640" BorderBrush="#38476B" BorderThickness="1"
+                        CornerRadius="12" Padding="16,13">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="SERVICE DEMANDEUR" FontSize="10" FontWeight="Bold" Foreground="#9CACCB"/>
+                        <TextBlock x:Name="RpText" FontSize="19" FontWeight="SemiBold"
+                                   Foreground="#F3F5FF" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>
-                <TextBlock Text="Entrez votre PIN pour confirmer cette demande" FontSize="12" Foreground="#B8CBE2" />
-                <TextBox x:Name="ApprovalPin" PasswordChar="●" MaxLength="4" Watermark="••••" HorizontalContentAlignment="Center" FontSize="18" KeyDown="ApprovalPin_KeyDown" />
-                <TextBlock x:Name="ApprovalError" FontSize="11" Foreground="#FF8E99" IsVisible="False" TextWrapping="Wrap" />
-                <ProgressBar x:Name="CountdownBar" Minimum="0" Maximum="30" Value="30" Height="5" Foreground="#AD80FA" />
-                <TextBlock x:Name="CountdownText" Text="Refus automatique dans 30 s" HorizontalAlignment="Right" FontSize="11" Foreground="#95A8C1" />
+                <TextBlock Text="PIN NEXORA" FontSize="10" FontWeight="Bold" Foreground="#A6B7D3"/>
+                <TextBox x:Name="ApprovalPin" PasswordChar="●" MaxLength="4" Watermark="••••"
+                         HorizontalContentAlignment="Center" FontSize="19" KeyDown="ApprovalPin_KeyDown"/>
+                <TextBlock x:Name="ApprovalError" FontSize="12" Foreground="#FF9DA9"
+                           IsVisible="False" TextWrapping="Wrap"/>
+                <ProgressBar x:Name="CountdownBar" Minimum="0" Maximum="30" Value="30" Height="6"
+                             Foreground="#A68CFA" Margin="0,3,0,0"/>
+                <TextBlock x:Name="CountdownText" Text="Refus automatique dans 30 s"
+                           HorizontalAlignment="Right" FontSize="11" Foreground="#A2B5D0"/>
             </StackPanel>
-            <Grid Grid.Row="2" ColumnDefinitions="*,*">
-                <Button Grid.Column="0" Content="Refuser" Click="Deny_Click" HorizontalContentAlignment="Center" />
-                <Button Grid.Column="1" Margin="10,0,0,0" Classes="accent" Content="Autoriser" Click="Approve_Click" HorizontalContentAlignment="Center" />
-            </Grid>
+        </ScrollViewer>
+        <Grid Grid.Row="2" ColumnDefinitions="*,*">
+            <Button Grid.Column="0" Content="Refuser" Classes="danger" Click="Deny_Click"/>
+            <Button Grid.Column="1" Margin="11,0,0,0" Classes="accent"
+                    Content="Autoriser" Click="Approve_Click"/>
         </Grid>
-    </Border>
+    </Grid>
 </Window>

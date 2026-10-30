@@ -40,13 +40,13 @@ internal sealed class VaultBackupWindow : Window
         _sticks = sticks;
         _restore = restore;
         Title = restore ? "Nexora Vault · Restaurer" : "Nexora Vault · Sauvegarder";
-        Width = 630;
-        Height = 570;
-        MinWidth = 490;
-        MinHeight = 460;
+        Width = 705;
+        Height = 650;
+        MinWidth = 550;
+        MinHeight = 510;
         CanResize = true;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        Background = Brush.Parse("#0B1220");
+        Background = Brush.Parse("#090D18");
         RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Dark;
 
         _password = PasswordBox("Mot de passe de sauvegarde (12 caractères minimum)");
@@ -63,13 +63,13 @@ internal sealed class VaultBackupWindow : Window
             Text = restore
                 ? "Le coffre actuel sera sauvegardé avant tout remplacement."
                 : "Le fichier de sauvegarde est chiffré. Il ne sera pas envoyé à GitHub.",
-            TextWrapping = TextWrapping.Wrap, Foreground = Brush.Parse("#8EDBE9"), FontSize = 12
+            TextWrapping = TextWrapping.Wrap, Foreground = Brush.Parse("#73E1D8"), FontSize = 12
         };
         _start = new Button
         {
             Content = restore ? "Restaurer le coffre" : "Créer la sauvegarde",
             HorizontalAlignment = HorizontalAlignment.Right,
-            Background = Brush.Parse(restore ? "#795174" : "#8A62D4"),
+            Background = Brush.Parse(restore ? "#74384F" : "#9177E9"),
             Foreground = Brushes.White, MinWidth = 175
         };
         _start.Click += Start_Click;
@@ -81,7 +81,7 @@ internal sealed class VaultBackupWindow : Window
         content.Children.Add(new TextBlock
         {
             Text = restore ? "RESTAURATION DU COFFRE" : "SAUVEGARDE CHIFFRÉE",
-            FontSize = 12, FontWeight = FontWeight.Bold, Foreground = Brush.Parse("#79DEEB")
+            FontSize = 12, FontWeight = FontWeight.Bold, Foreground = Brush.Parse("#84DED9")
         });
         content.Children.Add(new TextBlock
         {
@@ -98,9 +98,9 @@ internal sealed class VaultBackupWindow : Window
                   "AES-256-GCM avec un mot de passe indépendant. Conservez le fichier, ce mot de passe et " +
                   "votre code de récupération dans des lieux sûrs et distincts. " +
                   "Les clés USB virtuelles seront déconnectées avant la sauvegarde.",
-            TextWrapping = TextWrapping.Wrap, Foreground = Brush.Parse("#ABBFDB"), FontSize = 13
+            TextWrapping = TextWrapping.Wrap, Foreground = Brush.Parse("#ACBCDA"), FontSize = 13
         });
-        content.Children.Add(new Border { Height = 1, Background = Brush.Parse("#30405A"), Margin = new Thickness(0, 5) });
+        content.Children.Add(new Border { Height = 1, Background = Brush.Parse("#2D3B57"), Margin = new Thickness(0, 5) });
         content.Children.Add(Heading("MOT DE PASSE DE LA SAUVEGARDE"));
         content.Children.Add(_password);
         content.Children.Add(_passwordAgain);
@@ -113,7 +113,7 @@ internal sealed class VaultBackupWindow : Window
             {
                 Text = "La restauration remplace le coffre actif et entraîne la fermeture de Nexora. " +
                        "Toutes les clés USB virtuelles doivent être déconnectées.",
-                Foreground = Brush.Parse("#F5C2BC"), TextWrapping = TextWrapping.Wrap, FontSize = 12
+                Foreground = Brush.Parse("#FFBBBF"), TextWrapping = TextWrapping.Wrap, FontSize = 12
             });
             content.Children.Add(_confirmation);
         }
@@ -130,8 +130,16 @@ internal sealed class VaultBackupWindow : Window
 
         Content = new ScrollViewer
         {
-            Margin = new Thickness(28, 24),
-            Content = content,
+            Margin = new Thickness(27, 23),
+            Content = new Border
+            {
+                Background = Brush.Parse("#121C2F"),
+                BorderBrush = Brush.Parse("#34415E"),
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(16),
+                Padding = new Thickness(23, 21),
+                Child = content
+            },
             VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto
         };
     }
@@ -144,7 +152,7 @@ internal sealed class VaultBackupWindow : Window
     private static TextBlock Heading(string title) => new()
     {
         Text = title, FontSize = 11, FontWeight = FontWeight.Bold,
-        Foreground = Brush.Parse("#C9A7FF")
+        Foreground = Brush.Parse("#BEA5FF")
     };
 
     private async void Start_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)

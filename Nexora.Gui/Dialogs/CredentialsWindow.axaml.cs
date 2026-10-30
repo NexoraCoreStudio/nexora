@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
@@ -9,25 +10,21 @@ using Nexora.SecretManager;
 namespace Nexora.Gui.Dialogs;
 
 /// <summary>
-/// Read-only, metadata-only view of the credentials stored on a connected stick, with the
-/// ability to delete a credential. Only ever displays <see cref="CredentialInfo"/> - it never
-/// touches a key handle or private key material, so there is nothing sensitive to leak here.
+/// Read-only view of FIDO2 credential metadata. No private key material is loaded for this UI.
+/// Visual overhaul only: credential access, deletion and confirmation are unchanged.
 /// </summary>
 public partial class CredentialsWindow : Window
 {
     private IStickManager? _stickManager;
     private StickConfig? _stick;
 
-    public CredentialsWindow()
-    {
-        InitializeComponent();
-    }
+    public CredentialsWindow() => InitializeComponent();
 
     public static async Task ShowAsync(Window owner, IStickManager stickManager, StickConfig stick)
     {
         var window = new CredentialsWindow
         {
-            Title = $"Credentials - {stick.Name}",
+            Title = $"Identifiants FIDO2 · {stick.Name}",
             _stickManager = stickManager,
             _stick = stick,
         };
@@ -38,7 +35,6 @@ public partial class CredentialsWindow : Window
     private async Task RefreshAsync()
     {
         CredentialListPanel.Children.Clear();
-
         IReadOnlyList<CredentialInfo> credentials;
         try
         {
@@ -46,53 +42,66 @@ public partial class CredentialsWindow : Window
         }
         catch (Exception ex)
         {
-            SubtitleText.Text = $"Failed to load credentials: {ex.Message}";
+            SubtitleText.Text = $"Impossible de charger les identifiants : {ex.Message}";
             return;
         }
-
         SubtitleText.Text = credentials.Count == 0
-            ? "No credentials stored on this stick yet."
-            : $"{credentials.Count} credential(s) stored on this stick.";
-
+            ? "Aucun identifiant enregistré sur cette clé."
+            : $"{credentials.Count} identifiant(s) conservé(s) dans Nexora Vault.";
         foreach (var credential in credentials)
             CredentialListPanel.Children.Add(BuildCredentialCard(credential));
     }
 
     private Control BuildCredentialCard(CredentialInfo credential)
     {
-        var infoPanel = new StackPanel { Spacing = 2 };
-        infoPanel.Children.Add(new TextBlock { Text = credential.RpId, FontWeight = FontWeight.SemiBold });
+        var infoPanel = new StackPanel { Spacing = 5, VerticalAlignment = VerticalAlignment.Center };
         infoPanel.Children.Add(new TextBlock
         {
-            Text = string.IsNullOrEmpty(credential.UserDisplayName) ? credential.UserName : $"{credential.UserDisplayName} ({credential.UserName})",
-            Foreground = Brushes.Gray,
+            Text = credential.RpId,
+            FontWeight = FontWeight.SemiBold,
+            FontSize = 14,
+            Foreground = Brush.Parse("#F1F4FF"),
+            TextWrapping = TextWrapping.Wrap
+        });
+        infoPanel.Children.Add(new TextBlock
+        {
+            Text = string.IsNullOrEmpty(credential.UserDisplayName)
+                ? credential.UserName
+                : $"{credential.UserDisplayName} ({credential.UserName})",
+            Foreground = Brush.Parse("#AEC0DE"),
             FontSize = 12,
+            TextWrapping = TextWrapping.Wrap
         });
         infoPanel.Children.Add(new TextBlock
         {
-            Text = $"{(credential.IsResident ? "Resident" : "Non-resident")}  ·  sign count {credential.SignCount}  ·  credProtect {credential.CredProtect}",
-            Foreground = Brushes.Gray,
+            Text = $"{(credential.IsResident ? "Résident" : "Non résident")}  ·  signatures {credential.SignCount}  ·  credProtect {credential.CredProtect}",
+            Foreground = Brush.Parse("#8499BA"),
             FontSize = 11,
+            TextWrapping = TextWrapping.Wrap
         });
-
-        var deleteButton = new Button { Content = "Delete" };
+        var deleteButton = new Button
+        {
+            Content = "Supprimer",
+            Background = Brush.Parse("#392432"),
+            Foreground = Brush.Parse("#FFB0C0"),
+            BorderBrush = Brush.Parse("#684052"),
+            BorderThickness = new Thickness(1),
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = new Thickness(12, 0, 0, 0)
+        };
         deleteButton.Click += async (_, _) => await DeleteCredentialAsync(credential);
-
         var grid = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto") };
-        Grid.SetColumn(infoPanel, 0);
-        Grid.SetColumn(deleteButton, 1);
-        infoPanel.VerticalAlignment = VerticalAlignment.Center;
-        deleteButton.VerticalAlignment = VerticalAlignment.Center;
         grid.Children.Add(infoPanel);
+        Grid.SetColumn(deleteButton, 1);
         grid.Children.Add(deleteButton);
-
         return new Border
         {
-            Padding = new Avalonia.Thickness(12),
-            CornerRadius = new Avalonia.CornerRadius(6),
-            BorderBrush = Brushes.Gray,
-            BorderThickness = new Avalonia.Thickness(1),
-            Child = grid,
+            Padding = new Thickness(17, 15),
+            CornerRadius = new CornerRadius(12),
+            BorderBrush = Brush.Parse("#2E3A57"),
+            Background = Brush.Parse("#172239"),
+            BorderThickness = new Thickness(1),
+            Child = grid
         };
     }
 
@@ -100,21 +109,18 @@ public partial class CredentialsWindow : Window
     {
         var confirmed = await ConfirmWindow.ShowAsync(
             this,
-            "Delete credential",
-            $"Delete the credential for \"{credential.RpId}\" ({credential.UserName})? This cannot be undone.");
-        if (!confirmed)
-            return;
-
+            "Supprimer l'identifiant",
+            $"Supprimer l'identifiant pour « {credential.RpId} » ({credential.UserName}) ? Cette opération est irréversible.");
+        if (!confirmed) return;
         try
         {
             await _stickManager!.DeleteCredentialAsync(_stick!.Name, credential.CredentialId);
         }
         catch (Exception ex)
         {
-            await MessageWindow.ShowAsync(this, "Nexora", $"Failed to delete credential: {ex.Message}");
+            await MessageWindow.ShowAsync(this, "Nexora", $"Impossible de supprimer l'identifiant : {ex.Message}");
             return;
         }
-
         await RefreshAsync();
     }
 

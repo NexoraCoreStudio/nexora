@@ -1,32 +1,39 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Nexora.Gui.Dialogs.RecoveryCodeWindow"
-        Title="Nexora — Code de récupération"
-        Width="760" SizeToContent="Height"
-        CanResize="False"
-        WindowStartupLocation="CenterOwner"
-        ShowInTaskbar="False"
-        Background="#0B1220">
-    <StackPanel Margin="24" Spacing="14">
-        <TextBlock Text="Sauvegarde du code de récupération" FontSize="22" FontWeight="Bold" Foreground="#F0F7FF"/>
-        <TextBlock Text="Ce code secret de 256 bits est affiché une seule fois. Il permet d'ouvrir votre coffre sur un autre profil Windows. Conservez-le hors de la clé USB, dans un endroit sûr."
-                   Foreground="#AFBCD2" TextWrapping="Wrap"/>
-        <Border Background="#16233B" BorderBrush="#7154AB" BorderThickness="1" CornerRadius="10" Padding="12">
-            <TextBox x:Name="RecoveryCodeBox" IsReadOnly="True" FontFamily="Consolas" FontSize="15"
-                     TextWrapping="Wrap" HorizontalAlignment="Stretch" MinHeight="44"/>
-        </Border>
-        <TextBlock Text="Cliquez dans le champ pour sélectionner le code (Ctrl+A, Ctrl+C), ou utilisez « Copier le code ». Le bouton copie les 64 caractères exacts, sans espaces." 
-                   FontSize="12" Foreground="#A5B7D0" TextWrapping="Wrap"/>
-        <TextBlock Text="Attention : le presse-papiers Windows peut être accessible à d'autres logiciels et à l'historique du presse-papiers. Effacez-le après avoir sauvegardé le code." 
-                   FontSize="12" Foreground="#F2BF88" TextWrapping="Wrap"/>
-        <TextBlock x:Name="CopyStatus" IsVisible="False" Foreground="#72E1C6" FontSize="12" TextWrapping="Wrap"/>
-        <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0">
-            <CheckBox x:Name="SavedCodeCheckBox" Grid.Column="0" VerticalAlignment="Center"
-                      Content="J'ai sauvegardé ce code hors ligne."/>
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                <Button Content="Copier le code" Click="CopyCode_Click"/>
-                <Button Content="Continuer" Classes="accent" Click="Continue_Click"/>
-            </StackPanel>
-        </Grid>
-    </StackPanel>
+        Title="Nexora · Code de récupération"
+        Width="755" SizeToContent="Height" MaxHeight="780" MinWidth="620"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False" CanResize="True"
+        Background="#090D18" RequestedThemeVariant="Dark">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="29" Spacing="14">
+            <TextBlock Text="NEXORA  /  SÉCURITÉ DU COFFRE" Foreground="#A88BFA" FontSize="10" FontWeight="Bold"/>
+            <TextBlock Text="Conservez votre code de récupération" FontSize="24" FontWeight="Bold" Foreground="#F4F5FF"/>
+            <TextBlock Text="Ce code secret de 256 bits est affiché une seule fois. Il permet de récupérer votre coffre sur un autre profil Windows avec votre PIN."
+                       Foreground="#A9BAD6" TextWrapping="Wrap" FontSize="13"/>
+            <Border Background="#1B2340" BorderBrush="#755CA6" BorderThickness="1" CornerRadius="12" Padding="17" Margin="0,10,0,0">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="CODE DE RÉCUPÉRATION · À CONSERVER HORS LIGNE" FontSize="10"
+                               FontWeight="Bold" Foreground="#C1ABFF"/>
+                    <TextBox x:Name="RecoveryCodeBox" IsReadOnly="True" FontFamily="Consolas"
+                             FontSize="15" TextWrapping="Wrap" HorizontalAlignment="Stretch" MinHeight="50"/>
+                </StackPanel>
+            </Border>
+            <TextBlock Text="Sélectionnez le code avec Ctrl+A / Ctrl+C ou utilisez « Copier le code ». Ne l'enregistrez pas dans une capture d'écran."
+                       Foreground="#9AAECC" TextWrapping="Wrap" FontSize="12"/>
+            <Border Background="#342519" BorderBrush="#655036" BorderThickness="1" CornerRadius="10" Padding="12">
+                <TextBlock Text="Attention : le presse-papiers Windows peut être accessible à d'autres logiciels. Effacez-le après la sauvegarde."
+                           Foreground="#FFD59D" TextWrapping="Wrap" FontSize="12"/>
+            </Border>
+            <TextBlock x:Name="CopyStatus" IsVisible="False" Foreground="#73E9D5" FontSize="12" TextWrapping="Wrap"/>
+            <Border Height="1" Background="#283650" Margin="0,9,0,4"/>
+            <Grid ColumnDefinitions="*,Auto,Auto">
+                <CheckBox x:Name="SavedCodeCheckBox" Grid.Column="0" VerticalAlignment="Center"
+                          Content="J'ai sauvegardé ce code hors ligne."/>
+                <Button Grid.Column="1" Content="Copier le code" Click="CopyCode_Click"/>
+                <Button Grid.Column="2" Classes="accent" Content="Continuer" Margin="10,0,0,0"
+                        MinWidth="115" Click="Continue_Click"/>
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
 </Window>

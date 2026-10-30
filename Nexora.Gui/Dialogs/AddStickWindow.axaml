@@ -1,85 +1,78 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Nexora.Gui.Dialogs.AddStickWindow"
-        Title="Add stick"
-        Width="440" SizeToContent="Height"
-        CanResize="False"
-        WindowStartupLocation="CenterOwner"
-        ShowInTaskbar="False">
-    <ScrollViewer MaxHeight="600">
-        <StackPanel Margin="16" Spacing="12">
-            <StackPanel Spacing="4">
-                <TextBlock Text="Name"/>
-                <TextBox x:Name="NameBox" MaxLength="32" Watermark="Letters, digits, '.', '_', '-' - no spaces"/>
-            </StackPanel>
-
-            <StackPanel Spacing="4">
-                <TextBlock Text="Serial number"/>
-                <TextBox x:Name="SerialNumberBox"/>
-            </StackPanel>
-
-            <StackPanel x:Name="SecretManagerSection" Spacing="4">
-                <TextBlock Text="Secret manager"/>
-                <ComboBox x:Name="SecretManagerTypeBox" HorizontalAlignment="Stretch" SelectionChanged="SecretManagerType_SelectionChanged">
-                    <ComboBoxItem Content="Memory (not persisted)" IsEnabled="False" ToolTip.Tip="Clés temporaires perdues à la fermeture de Nexora."/>
-                    <ComboBoxItem Content="Nexora Vault (encrypted)"/>
-                    <ComboBoxItem Content="mTLS server" IsEnabled="False" ToolTip.Tip="Les secrets seraient stockés sur un serveur externe, hors de Nexora.vault."/>
-                </ComboBox>
-                <TextBlock Text="Nexora 1.2 : seule la conservation chiffrée dans Nexora.vault est activée. Le mode Memory est temporaire ; mTLS stocke les secrets sur un serveur externe." TextWrapping="Wrap" Foreground="#9BAEC8" FontSize="12" />
-            </StackPanel>
-
-            <StackPanel x:Name="FilePanel" Spacing="12" IsVisible="False">
-                <StackPanel Spacing="4">
-                    <TextBlock Text="Username"/>
-                    <TextBox x:Name="FileUsernameBox"/>
-                </StackPanel>
-                <StackPanel Spacing="4">
-                    <TextBlock Text="Password"/>
-                    <TextBox x:Name="FilePasswordBox" PasswordChar="*"/>
-                    <TextBlock Text="Used now to initialize the encrypted key store - not saved, so you'll enter it again each time you Connect." Foreground="Gray" FontSize="11" TextWrapping="Wrap"/>
-                </StackPanel>
-            </StackPanel>
-
-            <StackPanel x:Name="MtlsPanel" Spacing="12" IsVisible="False">
-                <StackPanel Spacing="4">
-                    <TextBlock Text="Server base address"/>
-                    <TextBox x:Name="MtlsServerAddressBox" Text="https://localhost:5443" Watermark="https://secrets.example.internal:5443"/>
-                </StackPanel>
-                <StackPanel Spacing="4">
-                    <TextBlock Text="Login password"/>
-                    <TextBox x:Name="MtlsLoginPasswordBox" PasswordChar="*"/>
-                    <TextBlock Text="Used now to test the connection - not saved, so you'll enter it again each time you Connect." Foreground="Gray" FontSize="11" TextWrapping="Wrap"/>
-                </StackPanel>
-                <StackPanel Spacing="4">
-                    <TextBlock Text="Client certificate (.pfx)"/>
-                    <Grid ColumnDefinitions="*,Auto">
-                        <TextBox x:Name="MtlsClientCertPathBox" Grid.Column="0"/>
-                        <Button Content="Browse..." Grid.Column="1" Margin="8,0,0,0" Click="BrowseClientCert_Click"/>
-                    </Grid>
-                </StackPanel>
-                <StackPanel Spacing="4">
-                    <TextBlock Text="Client certificate password (optional)"/>
-                    <TextBox x:Name="MtlsClientCertPasswordBox" PasswordChar="*"/>
-                </StackPanel>
-                <StackPanel Spacing="4">
-                    <TextBlock Text="Server CA certificate"/>
-                    <Grid ColumnDefinitions="*,Auto">
-                        <TextBox x:Name="MtlsServerCaCertPathBox" Grid.Column="0"/>
-                        <Button Content="Browse..." Grid.Column="1" Margin="8,0,0,0" Click="BrowseServerCaCert_Click"/>
-                    </Grid>
-                </StackPanel>
-            </StackPanel>
-
-            <TextBlock x:Name="ErrorText" Foreground="IndianRed" TextWrapping="Wrap" IsVisible="False"/>
-
-            <Grid ColumnDefinitions="*,Auto">
-                <Button x:Name="DeleteButton" Grid.Column="0" Content="Delete" HorizontalAlignment="Left"
-                        IsVisible="False" Click="Delete_Click"/>
-                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-                    <Button Content="Cancel" Width="80" Click="Cancel_Click"/>
-                    <Button x:Name="CreateButton" Content="Create" Width="80" Click="Create_Click" IsDefault="True"/>
-                </StackPanel>
-            </Grid>
+        Title="Nexora · Authentificateur"
+        Width="545" Height="675" MinWidth="490" MinHeight="480"
+        CanResize="True" WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False" Background="#090D18" RequestedThemeVariant="Dark">
+    <Grid RowDefinitions="Auto,*,Auto" Margin="25,22">
+        <StackPanel Grid.Row="0" Spacing="7" Margin="0,0,0,20">
+            <TextBlock Text="NEXORA  /  IDENTITÉ FIDO2" FontSize="10" FontWeight="Bold" Foreground="#A88BFA"/>
+            <TextBlock Text="Configurer un authentificateur" FontSize="23" FontWeight="Bold" Foreground="#F3F5FF"/>
+            <TextBlock Text="Les informations d'identification sont conservées dans le coffre chiffré Nexora Vault."
+                       TextWrapping="Wrap" Foreground="#9FADCA" FontSize="12"/>
         </StackPanel>
-    </ScrollViewer>
+        <Border Grid.Row="1" Background="#11192B" BorderBrush="#28354D" BorderThickness="1" CornerRadius="14"
+                Padding="17,15">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Spacing="15">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="NOM DE L'AUTHENTIFICATEUR" FontSize="10" FontWeight="Bold" Foreground="#A7B5D0"/>
+                        <TextBox x:Name="NameBox" MaxLength="32" Watermark="Ex. : Nexora-Principal"/>
+                        <TextBlock Text="Utiliser 1 à 32 lettres/chiffres et les caractères . _ - sans espaces."
+                                   TextWrapping="Wrap" FontSize="11" Foreground="#7C90AF"/>
+                    </StackPanel>
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="NUMÉRO DE SÉRIE" FontSize="10" FontWeight="Bold" Foreground="#A7B5D0"/>
+                        <TextBox x:Name="SerialNumberBox"/>
+                    </StackPanel>
+                    <StackPanel x:Name="SecretManagerSection" Spacing="8">
+                        <TextBlock Text="PROTECTION DES SECRETS" FontSize="10" FontWeight="Bold" Foreground="#A7B5D0"/>
+                        <ComboBox x:Name="SecretManagerTypeBox" HorizontalAlignment="Stretch"
+                                  SelectionChanged="SecretManagerType_SelectionChanged">
+                            <ComboBoxItem Content="Mémoire temporaire (indisponible)" IsEnabled="False"
+                                          ToolTip.Tip="Cette option ne conserve pas les clés après fermeture."/>
+                            <ComboBoxItem Content="Nexora Vault · stockage chiffré"/>
+                            <ComboBoxItem Content="Serveur mTLS (indisponible)" IsEnabled="False"/>
+                        </ComboBox>
+                        <Border Background="#162F32" BorderBrush="#245355" BorderThickness="1"
+                                CornerRadius="10" Padding="12,10">
+                            <TextBlock Text="●  Recommandé : chiffrement local Nexora Vault. Aucun mot de passe de clé n'est enregistré en clair."
+                                       Foreground="#87E1D6" FontSize="11" TextWrapping="Wrap"/>
+                        </Border>
+                    </StackPanel>
+                    <!-- Hidden legacy fields retained to preserve code-behind functionality. -->
+                    <StackPanel x:Name="FilePanel" Spacing="11" IsVisible="False">
+                        <TextBlock Text="COMPTE DU GESTIONNAIRE" FontSize="10" FontWeight="Bold"/>
+                        <TextBox x:Name="FileUsernameBox" Watermark="Compte"/>
+                        <TextBox x:Name="FilePasswordBox" PasswordChar="●" Watermark="Mot de passe"/>
+                    </StackPanel>
+                    <StackPanel x:Name="MtlsPanel" Spacing="10" IsVisible="False">
+                        <TextBlock Text="SERVEUR M-TLS" FontSize="10" FontWeight="Bold"/>
+                        <TextBox x:Name="MtlsServerAddressBox" Text="https://localhost:5443"/>
+                        <TextBox x:Name="MtlsLoginPasswordBox" PasswordChar="●" Watermark="Mot de passe"/>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBox x:Name="MtlsClientCertPathBox" Grid.Column="0" Watermark="Certificat client (.pfx)"/>
+                            <Button Grid.Column="1" Content="Parcourir" Click="BrowseClientCert_Click" Margin="8,0,0,0"/>
+                        </Grid>
+                        <TextBox x:Name="MtlsClientCertPasswordBox" PasswordChar="●" Watermark="Mot de passe du certificat"/>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBox x:Name="MtlsServerCaCertPathBox" Grid.Column="0" Watermark="Certificat CA"/>
+                            <Button Grid.Column="1" Content="Parcourir" Click="BrowseServerCaCert_Click" Margin="8,0,0,0"/>
+                        </Grid>
+                    </StackPanel>
+                    <TextBlock x:Name="ErrorText" Foreground="#FF9DA9" FontSize="12"
+                               TextWrapping="Wrap" IsVisible="False"/>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto" Margin="0,17,0,0">
+            <Button x:Name="DeleteButton" Grid.Column="0" Content="Supprimer la clé"
+                    Classes="danger" HorizontalAlignment="Left" IsVisible="False" Click="Delete_Click"/>
+            <Button Grid.Column="1" Content="Annuler" MinWidth="104" Click="Cancel_Click"/>
+            <Button x:Name="CreateButton" Grid.Column="2" Content="Créer la clé"
+                    Classes="accent" MinWidth="132" Margin="10,0,0,0"
+                    Click="Create_Click" IsDefault="True"/>
+        </Grid>
+    </Grid>
 </Window>

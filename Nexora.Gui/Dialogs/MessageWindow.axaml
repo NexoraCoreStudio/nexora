@@ -1,14 +1,17 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Nexora.Gui.Dialogs.MessageWindow"
-        Width="420" SizeToContent="Height"
-        CanResize="False"
-        WindowStartupLocation="CenterOwner"
-        ShowInTaskbar="False">
-    <Grid Margin="16" RowDefinitions="Auto,Auto">
-        <TextBlock x:Name="MessageText" Grid.Row="0" TextWrapping="Wrap" Margin="0,0,0,16"/>
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="OK" Width="80" Click="Ok_Click" IsDefault="True"/>
-        </StackPanel>
-    </Grid>
+        Width="490" SizeToContent="Height" MaxHeight="640"
+        CanResize="False" WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="#0B1020" RequestedThemeVariant="Dark">
+    <StackPanel Margin="25" Spacing="17">
+        <TextBlock Text="NEXORA  /  INFORMATION" Foreground="#82DDD7" FontSize="10" FontWeight="Bold"/>
+        <Border Background="#151F34" BorderBrush="#34405F" BorderThickness="1" CornerRadius="12" Padding="18">
+            <ScrollViewer MaxHeight="380">
+                <TextBlock x:Name="MessageText" Foreground="#DFE9F9" TextWrapping="Wrap" FontSize="13"/>
+            </ScrollViewer>
+        </Border>
+        <Button Classes="accent" Content="Compris" HorizontalAlignment="Right"
+                MinWidth="107" Click="Ok_Click" IsDefault="True"/>
+    </StackPanel>
 </Window>

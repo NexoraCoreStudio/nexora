@@ -1,15 +1,22 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Nexora.Gui.Dialogs.ConfirmWindow"
-        Width="420" SizeToContent="Height"
-        CanResize="False"
-        WindowStartupLocation="CenterOwner"
-        ShowInTaskbar="False">
-    <Grid Margin="16" RowDefinitions="Auto,Auto">
-        <TextBlock x:Name="MessageText" Grid.Row="0" TextWrapping="Wrap" Margin="0,0,0,16"/>
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
-            <Button Content="Cancel" Width="80" Click="Cancel_Click"/>
-            <Button x:Name="ConfirmButton" Content="Delete" Width="80" Click="Confirm_Click"/>
-        </StackPanel>
-    </Grid>
+        Width="480" SizeToContent="Height" MaxHeight="620"
+        CanResize="False" WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="#0B1020" RequestedThemeVariant="Dark">
+    <StackPanel Margin="25" Spacing="16">
+        <TextBlock Text="NEXORA  /  CONFIRMATION" Foreground="#B79CFF" FontSize="10" FontWeight="Bold"/>
+        <Border Background="#151F34" BorderBrush="#34405F" BorderThickness="1" CornerRadius="12" Padding="17,17">
+            <ScrollViewer MaxHeight="320">
+                <TextBlock x:Name="MessageText" TextWrapping="Wrap" FontSize="13" Foreground="#DAE5F7"/>
+            </ScrollViewer>
+        </Border>
+        <Grid ColumnDefinitions="*,Auto,Auto">
+            <TextBlock Text="Action soumise à confirmation" VerticalAlignment="Center"
+                       Foreground="#8498B8" FontSize="11"/>
+            <Button Grid.Column="1" Content="Annuler" MinWidth="104" Click="Cancel_Click"/>
+            <Button x:Name="ConfirmButton" Grid.Column="2" Content="Confirmer"
+                    Classes="danger" MinWidth="112" Margin="9,0,0,0" Click="Confirm_Click"/>
+        </Grid>
+    </StackPanel>
 </Window>

@@ -2,121 +2,347 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="Nexora.Gui.MainWindow"
         Icon="avares://Nexora/Assets/Nexora_Icon.png"
-        Title="Nexora · Clés virtuelles"
-        Width="1020" Height="690" MinWidth="750" MinHeight="510"
-        Background="#0B1220" RequestedThemeVariant="Dark">
+        Title="Nexora · Security workspace"
+        Width="1240" Height="810" MinWidth="970" MinHeight="680"
+        Background="#090D18" RequestedThemeVariant="Dark">
     <Grid>
-        <!-- Dashboard (hidden until unlock) -->
-        <Grid x:Name="Dashboard" ColumnDefinitions="236,*" IsVisible="False">
-            <Border Grid.Column="0" Background="#111D30" BorderBrush="#22334B" BorderThickness="0,0,1,0">
-                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel Margin="23,30" Spacing="18">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <Image Source="avares://Nexora/Assets/Nexora_Icon.png"
-                               Width="51" Height="51" Stretch="Uniform" />
-                        <StackPanel VerticalAlignment="Center" Spacing="3">
-                            <TextBlock Text="NEXORA" FontSize="17" FontWeight="Bold" Foreground="#EBD9FF" />
-                            <TextBlock Text="VIRTUAL SECURITY KEY" FontSize="9" Foreground="#82DFFD" />
+        <!-- Nexora workspace: real navigation and real device/vault information. -->
+        <Grid x:Name="Dashboard" ColumnDefinitions="224,*" IsVisible="False">
+            <Border Grid.Column="0" Background="#0B1426" BorderBrush="#263A5A" BorderThickness="0,0,1,0">
+                <Grid RowDefinitions="Auto,*,Auto" Margin="17,21,17,17">
+                    <StackPanel Grid.Row="0" Spacing="17">
+                        <StackPanel Orientation="Horizontal" Spacing="10" Margin="7,0,0,0">
+                            <Border Width="46" Height="46" CornerRadius="12" Padding="6"
+                                    Background="#201B43" BorderBrush="#5A48A1" BorderThickness="1">
+                                <Image Source="avares://Nexora/Assets/Nexora_Icon.png" Stretch="Uniform"/>
+                            </Border>
+                            <StackPanel VerticalAlignment="Center" Spacing="4">
+                                <TextBlock Text="NEXORA" FontSize="18" FontWeight="Bold" Foreground="#F4F3FF" LetterSpacing="1.1"/>
+                                <TextBlock Text="SECURITY WORKSPACE" FontSize="9" Foreground="#83BDFE"/>
+                            </StackPanel>
                         </StackPanel>
+                        <Border Height="1" Background="#283955"/>
                     </StackPanel>
-                    <Border Height="1" Background="#273852" Margin="0,14,0,8" />
-                    <Border Padding="14" CornerRadius="10" Background="#29224B">
-                        <TextBlock Text="◈   Tableau de bord" Foreground="#CA9BFF" FontSize="13" FontWeight="SemiBold" />
-                    </Border>
-                    <TextBlock Text="  ◇   Authentificateurs" Foreground="#AABBD2" FontSize="13" />
-                    <TextBlock Text="  ◇   FIDO2 / CTAP2" Foreground="#AABBD2" FontSize="13" />
-                    <Button Content="↻  Actualiser" Click="Refresh_Click"/>
-                    <Button Content="⌕  Historique" Click="History_Click"/>
-                    <Button Content="⚙  Changer mon PIN" Click="ShowChangePin_Click"/>
-                    <Image Source="avares://Nexora/Assets/Nexora_Wordmark.png"
-                           Width="181" Height="73" Stretch="Uniform"
-                           HorizontalAlignment="Center" Margin="0,2,0,0" />
-                    <Border Height="1" Background="#273852" Margin="0,1,0,0" />
-                    <TextBlock Text="PROTECTION" FontSize="10" FontWeight="Bold" Foreground="#7288A7" />
-                    <TextBlock Text="PIN requis pour autoriser chaque opération" TextWrapping="Wrap" FontSize="12" Foreground="#96A9C3" />
-                    <Button Content="🔒  Verrouiller" Click="Lock_Click" HorizontalAlignment="Stretch" Margin="0,12,0,0" />
+                    <ScrollViewer Grid.Row="1" Margin="0,20,0,0" VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel Spacing="5">
+                            <TextBlock Text="NAVIGATION" FontSize="10" FontWeight="Bold" LetterSpacing="1.3"
+                                       Foreground="#8092B2" Margin="11,1,0,9"/>
+                            <Button x:Name="NavDashboard" Classes="nav selected" Content="⌂    Tableau de bord" Click="GoDashboard_Click"/>
+                            <Button x:Name="NavKeys" Classes="nav" Content="◇    Authentificateurs" Click="GoKeys_Click"/>
+                            <Button x:Name="NavVault" Classes="nav" Content="♙    Nexora Vault" Click="GoVault_Click"/>
+                            <Button x:Name="NavFortress" Classes="nav" Content="⬡    Crypt Fortress" Click="GoFortress_Click"/>
+                            <Button x:Name="NavUsb" Classes="nav" Content="⌁    Appareils USB/IP" Click="GoUsb_Click"/>
+                            <Border Height="1" Background="#283955" Margin="0,13,0,13"/>
+                            <TextBlock Text="OUTILS" FontSize="10" FontWeight="Bold" LetterSpacing="1.3"
+                                       Foreground="#8092B2" Margin="11,0,0,9"/>
+                            <Button x:Name="NavDiagnostics" Classes="nav" Content="▤    Diagnostics" Click="GoDiagnostics_Click"/>
+                            <Button Classes="nav" Content="↻    Mises à jour" Click="SidebarUpdate_Click"/>
+                            <Button Classes="nav" Content="⚙    Paramètres" Click="SidebarSettings_Click"/>
+                            <Border Background="#151F37" BorderBrush="#2D3D5A" BorderThickness="1"
+                                    Padding="13" CornerRadius="12" Margin="0,20,0,0">
+                                <StackPanel Spacing="7">
+                                    <TextBlock Text="●  COFFRE CHIFFRÉ" FontSize="10" FontWeight="Bold" Foreground="#55DFBA"/>
+                                    <TextBlock Text="Clés et données locales. Aucune synchronisation cloud automatique."
+                                               FontSize="11" Foreground="#9AABC7" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                    <!-- Existing titlebar inserts its functional Déconnexion action after this button. -->
+                    <StackPanel Grid.Row="2" Spacing="8" Margin="0,12,0,0">
+                        <Border Height="1" Background="#263A5A" Margin="0,0,0,6"/>
+                        <Button Content="🔒  Verrouiller" Click="Lock_Click" HorizontalAlignment="Stretch"/>
+                        <TextBlock Text="NEXORA  ·  LOCAL FIRST" FontSize="9" Foreground="#6880A6"
+                                   TextAlignment="Center" Margin="0,9,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            <Grid Grid.Column="1" Margin="26,21,26,22">
+                <!-- Dashboard: four metrics / recent activity / verified local status. -->
+                <ScrollViewer x:Name="DashboardPage" VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Spacing="18">
+                        <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,4">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="NEXORA  /  VUE D'ENSEMBLE" Classes="eyebrow"/>
+                                <TextBlock Text="Tableau de bord" Classes="pageTitle"/>
+                                <TextBlock Text="Ton espace de sécurité FIDO2, sous contrôle local." Classes="subtext"/>
+                            </StackPanel>
+                            <Border Grid.Column="1" Classes="statusBadge" VerticalAlignment="Center" Margin="12,0,0,0">
+                                <TextBlock Text="●  Coffre déverrouillé" Foreground="#74F1C9" FontSize="12" FontWeight="SemiBold"/>
+                            </Border>
+                        </Grid>
+                        <Grid ColumnDefinitions="*,*,*,*" >
+                            <Border Grid.Column="0" Classes="metricCard" Margin="0,0,10,0">
+                                <StackPanel Spacing="10">
+                                    <TextBlock Text="◇" FontSize="24" Foreground="#9F88FF"/>
+                                    <TextBlock x:Name="TotalSticksText" Text="0" Classes="metricValue"/>
+                                    <TextBlock Text="Clés FIDO2" Classes="metricCaption"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="1" Classes="metricCard" Margin="0,0,10,0">
+                                <StackPanel Spacing="10">
+                                    <TextBlock Text="⌁" FontSize="24" Foreground="#52E4E0"/>
+                                    <TextBlock x:Name="ConnectedSticksText" Text="0" Classes="metricValue" Foreground="#52E4E0"/>
+                                    <TextBlock Text="USB/IP connectées" Classes="metricCaption"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="2" Classes="metricCard" Margin="0,0,10,0">
+                                <StackPanel Spacing="10">
+                                    <TextBlock Text="♙" FontSize="24" Foreground="#FFCA6A"/>
+                                    <TextBlock Text="Ouvert" FontSize="19" FontWeight="Bold" Foreground="#FFD18B" Margin="0,4,0,3"/>
+                                    <TextBlock Text="Nexora Vault" Classes="metricCaption"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="3" Classes="metricCard">
+                                <StackPanel Spacing="10">
+                                    <TextBlock Text="⬡" FontSize="24" Foreground="#B898FF"/>
+                                    <TextBlock Text="Aperçu" FontSize="19" FontWeight="Bold" Foreground="#C2AAFF" Margin="0,4,0,3"/>
+                                    <TextBlock Text="Crypt Fortress v2" Classes="metricCaption"/>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                        <Grid ColumnDefinitions="1.15*,0.85*"  MinHeight="210">
+                            <Border Grid.Column="0" Classes="workspaceCard" Padding="17,15" Margin="0,0,13,0">
+                                <Grid RowDefinitions="Auto,*">
+                                    <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,12">
+                                        <TextBlock Text="Activité récente" Classes="cardTitle"/>
+                                        <Button Grid.Column="1" Content="Tout voir →" Classes="textlink" Click="GoDiagnostics_Click"/>
+                                    </Grid>
+                                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" MaxHeight="180">
+                                        <StackPanel x:Name="DashboardActivityPanel" Spacing="9"/>
+                                    </ScrollViewer>
+                                </Grid>
+                            </Border>
+                            <Border Grid.Column="1" Classes="workspaceCard" Padding="17,15">
+                                <StackPanel Spacing="12">
+                                    <TextBlock Text="État du système" Classes="cardTitle"/>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Text="◈  Application Nexora" Classes="subtext"/>
+                                        <TextBlock Grid.Column="1" Text="●  Exécutée" Foreground="#59E8BC" FontSize="11"/>
+                                    </Grid>
+                                    <Border Height="1" Background="#22344F"/>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Text="♙  Coffre local" Classes="subtext"/>
+                                        <TextBlock Grid.Column="1" Text="●  Déverrouillé" Foreground="#59E8BC" FontSize="11"/>
+                                    </Grid>
+                                    <Border Height="1" Background="#22344F"/>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Text="⌁  Sessions USB/IP" Classes="subtext"/>
+                                        <TextBlock x:Name="UsbSystemStatusText" Grid.Column="1" Text="—" Foreground="#78C5FF" FontSize="11"/>
+                                    </Grid>
+                                    <Border Height="1" Background="#22344F"/>
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Text="⬡  Crypt Fortress v2" Classes="subtext"/>
+                                        <TextBlock Grid.Column="1" Text="Expérimental" Foreground="#FFD18B" FontSize="11"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                        <Border Classes="workspaceCard" Padding="18,17">
+                            <StackPanel Spacing="12">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Spacing="4">
+                                        <TextBlock Text="Authentificateurs" Classes="cardTitle"/>
+                                        <TextBlock Text="Retrouve et gère tes clés virtuelles." Classes="subtext"/>
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Content="Gérer les clés →" Classes="accent" Click="GoKeys_Click"/>
+                                </Grid>
+                                <StackPanel x:Name="DashboardKeyPreviewPanel" Spacing="8"/>
+                            </StackPanel>
+                        </Border>
+                        <TextBlock x:Name="AuditPreviewText" Text="Aucune activité." Classes="fineprint"
+                                   TextWrapping="Wrap" Margin="3,0,0,0"/>
                     </StackPanel>
                 </ScrollViewer>
-            </Border>
-            <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*" Margin="29,26">
-                <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-                    <StackPanel Spacing="7">
-                        <TextBlock Text="Tableau de bord" FontSize="29" FontWeight="Bold" Foreground="#F4F8FF"/>
-                        <TextBlock Text="Contrôle local de tes clés FIDO2 virtuelles" FontSize="13" Foreground="#97ABC6" />
-                    </StackPanel>
-                    <Border Grid.Column="1" BorderBrush="#225D57" BorderThickness="1" CornerRadius="20" Background="#153931" Padding="14,8" VerticalAlignment="Center">
-                        <TextBlock Text="●  Application déverrouillée" Foreground="#5BDEC1" FontSize="12" />
-                    </Border>
-                </Grid>
-                <Grid Grid.Row="1" ColumnDefinitions="*,*" Margin="0,26,0,20">
-                    <Border Grid.Column="0" Background="#152238" CornerRadius="15" Padding="20" Margin="0,0,8,0">
-                        <StackPanel Spacing="9">
-                            <TextBlock Text="AUTHENTIFICATEURS" FontSize="11" Foreground="#91A8C5" FontWeight="Bold" />
-                            <TextBlock x:Name="TotalSticksText" Text="0" FontSize="34" FontWeight="Bold" Foreground="White" />
-                            <TextBlock Text="Clés configurées" FontSize="12" Foreground="#889BB7" />
+
+                <!-- Actual credentials/actions are kept on a separate page. -->
+                <Grid x:Name="KeysPage" IsVisible="False" RowDefinitions="Auto,*">
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,19">
+                        <StackPanel Spacing="7">
+                            <TextBlock Text="NEXORA  /  AUTHENTIFICATEURS" Classes="eyebrow"/>
+                            <TextBlock Text="Authentificateurs FIDO2" Classes="pageTitle"/>
+                            <TextBlock Text="Connecter, configurer et consulter les identifiants enregistrés." Classes="subtext"/>
                         </StackPanel>
-                    </Border>
-                    <Border Grid.Column="1" Background="#152238" CornerRadius="15" Padding="20" Margin="8,0,0,0">
-                        <StackPanel Spacing="9">
-                            <TextBlock Text="CONNEXION USB VIRTUELLE" FontSize="11" Foreground="#91A8C5" FontWeight="Bold" />
-                            <TextBlock x:Name="ConnectedSticksText" Text="0" FontSize="34" FontWeight="Bold" Foreground="#42DEBF" />
-                            <TextBlock Text="Clés connectées" FontSize="12" Foreground="#889BB7" />
-                        </StackPanel>
-                    </Border>
-                </Grid>
-                <Grid Grid.Row="2" RowDefinitions="Auto,*,Auto">
-                    <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,14">
-                        <StackPanel Spacing="4">
-                            <TextBlock Text="Mes clés de sécurité" FontSize="19" FontWeight="SemiBold" Foreground="#EAF3FF"/>
-                            <TextBlock Text="Connecter, gérer et consulter les identifiants" FontSize="12" Foreground="#8296B4" />
-                        </StackPanel>
-                        <Button Grid.Column="1" Classes="accent" Content="+  Ajouter une clé" Click="AddStick_Click" VerticalAlignment="Center" />
+                        <Button Grid.Column="1" Content="＋  Nouvelle clé" Click="AddStick_Click"
+                                VerticalAlignment="Center" Classes="accent" MinWidth="142"/>
                     </Grid>
-                    <ScrollViewer Grid.Row="1">
-                        <StackPanel x:Name="StickListPanel" Spacing="12" />
-                    </ScrollViewer>
-                    <Border Grid.Row="2" Background="#142337" Padding="12" Margin="0,12,0,0" CornerRadius="10">
-                        <StackPanel Spacing="6">
-                            <TextBlock Text="ACTIVITÉ RÉCENTE" Foreground="#BA98FF" FontWeight="Bold" FontSize="11"/>
-                            <TextBlock x:Name="AuditPreviewText" Text="Aucune activité." FontSize="12" Foreground="#A7BDD6" TextWrapping="Wrap"/>
+                    <Border Grid.Row="1" Classes="workspaceCard" Padding="16">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                            <StackPanel x:Name="StickListPanel" Spacing="12"/>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+
+                <!-- Vault actions use the existing encrypted backup workflows. -->
+                <ScrollViewer x:Name="VaultPage" IsVisible="False" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="20">
+                        <StackPanel Spacing="7">
+                            <TextBlock Text="NEXORA  /  COFFRE-FORT" Classes="eyebrow"/>
+                            <TextBlock Text="Nexora Vault" Classes="pageTitle"/>
+                            <TextBlock Text="Sauvegarder et restaurer ton coffre chiffré." Classes="subtext"/>
                         </StackPanel>
+                        <Border Classes="workspaceCard" Padding="23">
+                            <StackPanel Spacing="15">
+                                <TextBlock Text="●  COFFRE DÉVERROUILLÉ" Foreground="#59E8BC" FontWeight="Bold" FontSize="12"/>
+                                <TextBlock Text="Tes clés FIDO2 restent chiffrées et protégées par Nexora Vault."
+                                           Classes="cardTitle" TextWrapping="Wrap"/>
+                                <TextBlock Text="Les fichiers et secrets du coffre ne sont pas transmis à GitHub."
+                                           Classes="subtext" TextWrapping="Wrap"/>
+                                <Border Height="1" Background="#273954"/>
+                                <Grid ColumnDefinitions="*,*" >
+                                    <Button Grid.Column="0" Classes="accent" Margin="0,0,10,0" Content="⇧  Sauvegarder le coffre" Click="VaultBackup_Click"/>
+                                    <Button Grid.Column="1" Content="⇩  Restaurer une sauvegarde" Click="VaultRestore_Click"/>
+                                </Grid>
+                                <TextBlock Text="La restauration peut nécessiter le PIN, le code de récupération et la fermeture de Nexora."
+                                           Classes="fineprint" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Fortress is intentionally NOT represented as active in stable builds. -->
+                <ScrollViewer x:Name="FortressPage" IsVisible="False" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="20">
+                        <StackPanel Spacing="7">
+                            <TextBlock Text="NEXORA  /  CRYPTOGRAPHIE" Classes="eyebrow"/>
+                            <TextBlock Text="Crypt Fortress" Classes="pageTitle"/>
+                            <TextBlock Text="Architecture expérimentale de protection du coffre." Classes="subtext"/>
+                        </StackPanel>
+                        <Border Classes="workspaceCard" Padding="23">
+                            <StackPanel Spacing="16">
+                                <TextBlock Text="⚠  FONCTION EXPÉRIMENTALE" Foreground="#FFD48C" FontSize="12" FontWeight="Bold"/>
+                                <TextBlock Text="Fortress v2 n'est pas activé par défaut." FontSize="22" FontWeight="Bold" Foreground="#EFEAFF"/>
+                                <TextBlock Text="Cette architecture prévoit une séparation des clés de chiffrement, HKDF-SHA-256 et AES-256-GCM. La migration nécessite une compilation d'aperçu et des sauvegardes validées."
+                                           Classes="subtext" TextWrapping="Wrap"/>
+                                <Grid ColumnDefinitions="*,*,*" >
+                                    <Border Grid.Column="0" Classes="miniCard" Margin="0,0,10,0">
+                                        <StackPanel Spacing="7">
+                                            <TextBlock Text="⬡" FontSize="22" Foreground="#51DDDB"/>
+                                            <TextBlock Text="AES-256-GCM" Foreground="#E2EDFF" FontWeight="SemiBold"/>
+                                            <TextBlock Text="Chiffrement authentifié" Classes="fineprint"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Grid.Column="1" Classes="miniCard" Margin="0,0,10,0">
+                                        <StackPanel Spacing="7">
+                                            <TextBlock Text="◇" FontSize="22" Foreground="#A68CFF"/>
+                                            <TextBlock Text="HKDF-SHA-256" Foreground="#E2EDFF" FontWeight="SemiBold"/>
+                                            <TextBlock Text="Dérivation de clés" Classes="fineprint"/>
+                                        </StackPanel>
+                                    </Border>
+                                    <Border Grid.Column="2" Classes="miniCard">
+                                        <StackPanel Spacing="7">
+                                            <TextBlock Text="♙" FontSize="22" Foreground="#F9C77D"/>
+                                            <TextBlock Text="Préservation" Foreground="#E2EDFF" FontWeight="SemiBold"/>
+                                            <TextBlock Text="Sauvegarde v1 requise" Classes="fineprint"/>
+                                        </StackPanel>
+                                    </Border>
+                                </Grid>
+                                <Button Content="⚙  Paramètres de sécurité" Click="SidebarSettings_Click" HorizontalAlignment="Left"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- Real USB/IP connections from the existing stick manager. -->
+                <Grid x:Name="UsbPage" IsVisible="False" RowDefinitions="Auto,*">
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,19">
+                        <StackPanel Spacing="7">
+                            <TextBlock Text="NEXORA  /  APPAREILS VIRTUELS" Classes="eyebrow"/>
+                            <TextBlock Text="Appareils USB/IP" Classes="pageTitle"/>
+                            <TextBlock Text="Connexions locales de tes authentificateurs FIDO2." Classes="subtext"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Classes="quiet" Content="↻  Actualiser" Click="RefreshWorkspace_Click" VerticalAlignment="Center"/>
+                    </Grid>
+                    <Border Grid.Row="1" Classes="workspaceCard" Padding="18">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="UsbDevicesPanel" Spacing="11"/>
+                        </ScrollViewer>
+                    </Border>
+                </Grid>
+
+                <!-- Encrypted on-device security history; no remote telemetry. -->
+                <Grid x:Name="DiagnosticsPage" IsVisible="False" RowDefinitions="Auto,*">
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,19">
+                        <StackPanel Spacing="7">
+                            <TextBlock Text="NEXORA  /  OBSERVABILITÉ LOCALE" Classes="eyebrow"/>
+                            <TextBlock Text="Diagnostics" Classes="pageTitle"/>
+                            <TextBlock Text="Événements locaux issus de Nexora Vault." Classes="subtext"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Content="↻  Actualiser les journaux" Click="RefreshWorkspace_Click" VerticalAlignment="Center"/>
+                    </Grid>
+                    <Border Grid.Row="1" Classes="workspaceCard" Padding="18">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel x:Name="DiagnosticsEventsPanel" Spacing="10"/>
+                        </ScrollViewer>
                     </Border>
                 </Grid>
             </Grid>
         </Grid>
-        <!-- PIN change overlay: requires current PIN -->
-        <Border x:Name="ChangePinOverlay" IsVisible="False" Background="#DA0A1220">
-            <Border Width="430" Background="#152238" CornerRadius="18" Padding="26" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <StackPanel Spacing="12">
-                    <TextBlock Text="Modifier le code PIN" FontSize="23" FontWeight="Bold" Foreground="White"/>
-                    <TextBlock Text="PIN actuel" Foreground="#9CB1D0"/>
-                    <TextBox x:Name="OldPinEntry" PasswordChar="●" MaxLength="4"/>
-                    <TextBlock Text="Nouveau PIN (4 chiffres)" Foreground="#9CB1D0"/>
-                    <TextBox x:Name="NewPinEntry" PasswordChar="●" MaxLength="4"/>
-                    <TextBlock Text="Confirmer le nouveau PIN" Foreground="#9CB1D0"/>
-                    <TextBox x:Name="NewPinConfirmEntry" PasswordChar="●" MaxLength="4"/>
-                    <TextBlock x:Name="ChangePinError" Foreground="#FF979D" IsVisible="False" TextWrapping="Wrap"/>
-                    <Button Classes="accent" Content="Enregistrer" Click="ChangePin_Click"/>
-                    <Button Content="Annuler" Click="CancelChangePin_Click"/>
-                </StackPanel>
-            </Border>
+
+        <!-- The existing change-PIN flow remains unchanged. -->
+        <Border x:Name="ChangePinOverlay" IsVisible="False" Background="#ED090D18">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <Border MaxWidth="475" MinWidth="365" Margin="24" Padding="27" HorizontalAlignment="Center"
+                        VerticalAlignment="Center" BorderBrush="#604F91" BorderThickness="1" CornerRadius="18"
+                        Background="#151D32">
+                    <StackPanel Spacing="13">
+                        <TextBlock Text="PROTECTION DU COFFRE" FontSize="10" FontWeight="Bold" Foreground="#A78BFA"/>
+                        <TextBlock Text="Modifier votre code PIN" FontSize="24" FontWeight="Bold" Foreground="#F5F6FF"/>
+                        <TextBlock Text="Le code actuel est nécessaire pour autoriser cette opération."
+                                   FontSize="12" Foreground="#A9BAD6" TextWrapping="Wrap" Margin="0,0,0,5"/>
+                        <TextBlock Text="PIN ACTUEL" FontSize="10" FontWeight="Bold" Foreground="#A4B2CB"/>
+                        <TextBox x:Name="OldPinEntry" PasswordChar="●" MaxLength="4" Watermark="••••"/>
+                        <TextBlock Text="NOUVEAU PIN · 4 CHIFFRES" FontSize="10" FontWeight="Bold" Foreground="#A4B2CB"/>
+                        <TextBox x:Name="NewPinEntry" PasswordChar="●" MaxLength="4" Watermark="••••"/>
+                        <TextBlock Text="CONFIRMER LE PIN" FontSize="10" FontWeight="Bold" Foreground="#A4B2CB"/>
+                        <TextBox x:Name="NewPinConfirmEntry" PasswordChar="●" MaxLength="4" Watermark="••••"/>
+                        <TextBlock x:Name="ChangePinError" Foreground="#FF9BA7" IsVisible="False" TextWrapping="Wrap"/>
+                        <Grid ColumnDefinitions="*,*" Margin="0,9,0,0">
+                            <Button Grid.Column="0" Classes="quiet" Content="Annuler" Click="CancelChangePin_Click"/>
+                            <Button Grid.Column="1" Classes="accent" Content="Enregistrer le PIN"
+                                    Margin="10,0,0,0" Click="ChangePin_Click"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </ScrollViewer>
         </Border>
-        <!-- Lock/setup panel overlays dashboard -->
-        <Border x:Name="LockOverlay" Background="#0A1220">
-            <Grid>
-                <Border Width="420" Padding="32" HorizontalAlignment="Center" VerticalAlignment="Center" Background="#152238" BorderBrush="#634A98" BorderThickness="1" CornerRadius="20">
-                    <StackPanel Spacing="16">
-                        <Image Source="avares://Nexora/Assets/Nexora_Wordmark.png"
-                               Width="302" Height="106" Stretch="Uniform"
-                               HorizontalAlignment="Center" />
-                        <TextBlock x:Name="LockTitle" Text="Déverrouiller Nexora" HorizontalAlignment="Center" FontSize="23" FontWeight="Bold" Foreground="White" />
-                        <TextBlock x:Name="LockInfo" Text="Entre ton code de 4 chiffres" HorizontalAlignment="Center" Foreground="#A5B7D0" FontSize="13" />
-                        <TextBox x:Name="PinEntry" PasswordChar="●" MaxLength="4" Watermark="Code PIN (4 chiffres)" HorizontalContentAlignment="Center" FontSize="19" KeyDown="PinEntry_KeyDown" />
-                        <TextBox x:Name="PinConfirm" PasswordChar="●" MaxLength="4" Watermark="Confirmer le PIN" HorizontalContentAlignment="Center" FontSize="19" IsVisible="False" KeyDown="PinEntry_KeyDown" />
-                        <TextBox x:Name="RecoveryCodeEntry" PasswordChar="●" MaxLength="80" Watermark="Code de recuperation (autre PC seulement)" HorizontalContentAlignment="Center" FontSize="12" IsVisible="False" />
-                        <TextBlock x:Name="PinError" Foreground="#FF8C93" FontSize="12" TextWrapping="Wrap" IsVisible="False" />
-                        <Button x:Name="UnlockButton" Classes="accent" Content="Déverrouiller" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Click="Unlock_Click" />
-                        <TextBlock Text="Le coffre chiffré est conservé à côté de Nexora.exe. Le PIN CTAP2 est indépendant." TextWrapping="Wrap" TextAlignment="Center" FontSize="11" Foreground="#7E91AE" />
+
+        <!-- First-run, PIN unlock and Windows recovery controls preserve original bindings. -->
+        <Border x:Name="LockOverlay" Background="#090D18">
+            <Grid ColumnDefinitions="*,Auto,*" RowDefinitions="*,Auto,*">
+                <Border Grid.Column="1" Grid.Row="1" Background="#121A2D" BorderBrush="#463861"
+                        BorderThickness="1" CornerRadius="19" Width="445" Padding="31">
+                    <StackPanel Spacing="15">
+                        <Border HorizontalAlignment="Center" Background="#211A3B" CornerRadius="15"
+                                Width="79" Height="79" Padding="12" Margin="0,4,0,0">
+                            <Image Source="avares://Nexora/Assets/Nexora_Icon.png" Stretch="Uniform"/>
+                        </Border>
+                        <TextBlock Text="NEXORA VAULT" FontSize="10" FontWeight="Bold" Foreground="#A88BFF"
+                                   HorizontalAlignment="Center" LetterSpacing="1.3"/>
+                        <TextBlock x:Name="LockTitle" Text="Déverrouiller Nexora" FontSize="25"
+                                   FontWeight="Bold" Foreground="#F5F6FF" HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="LockInfo" Text="Entrez votre PIN pour continuer"
+                                   Foreground="#A6B4D0" FontSize="12" TextAlignment="Center" TextWrapping="Wrap"/>
+                        <Border Height="1" Background="#29344D" Margin="0,9,0,6"/>
+                        <TextBlock Text="CODE PIN" FontSize="10" FontWeight="Bold" Foreground="#A3B0CB"/>
+                        <TextBox x:Name="PinEntry" PasswordChar="●" MaxLength="4"
+                                 Watermark="••••" HorizontalContentAlignment="Center" FontSize="21"
+                                 KeyDown="PinEntry_KeyDown"/>
+                        <TextBox x:Name="PinConfirm" PasswordChar="●" MaxLength="4"
+                                 Watermark="Confirmer le code PIN" HorizontalContentAlignment="Center"
+                                 FontSize="15" IsVisible="False" KeyDown="PinEntry_KeyDown"/>
+                        <TextBox x:Name="RecoveryCodeEntry" PasswordChar="●" MaxLength="80"
+                                 Watermark="Code de récupération (autre profil Windows)"
+                                 FontSize="12" IsVisible="False"/>
+                        <TextBlock x:Name="PinError" Foreground="#FF9BA7" FontSize="12"
+                                   TextWrapping="Wrap" IsVisible="False"/>
+                        <Button x:Name="UnlockButton" Classes="accent" Content="Déverrouiller le coffre"
+                                HorizontalAlignment="Stretch" Click="Unlock_Click" Margin="0,9,0,0"/>
+                        <TextBlock Text="Le coffre et les identifiants FIDO2 sont stockés localement. Aucun secret n'est transmis à GitHub."
+                                   TextWrapping="Wrap" TextAlignment="Center" FontSize="11"
+                                   Foreground="#7F90AE" Margin="0,5,0,0"/>
                     </StackPanel>
                 </Border>
             </Grid>
